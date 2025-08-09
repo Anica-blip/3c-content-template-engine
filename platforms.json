@@ -1,1 +1,478 @@
+{
+  "platforms": {
+    "telegram": {
+      "name": "Telegram",
+      "icon": "📱",
+      "description": "Instant messaging platform",
+      "fields": {
+        "title": {
+          "show": true,
+          "maxLength": 100,
+          "required": true,
+          "label": "Post Title"
+        },
+        "shortDescription": {
+          "show": true,
+          "maxLength": 300,
+          "required": true,
+          "label": "Description"
+        },
+        "longDescription": {
+          "show": false
+        },
+        "hashtags": {
+          "show": true,
+          "maxCount": 3,
+          "required": false,
+          "label": "Hashtags"
+        },
+        "keywords": {
+          "show": false
+        },
+        "brandInfo": {
+          "show": true,
+          "required": true,
+          "label": "Contact Info"
+        },
+        "callToAction": {
+          "show": true,
+          "maxLength": 50,
+          "required": false,
+          "label": "Call to Action"
+        }
+      },
+      "formatting": {
+        "style": "minimal",
+        "maxTotalLength": 4096,
+        "lineBreaks": "single",
+        "emphasis": "**bold**",
+        "structure": [
+          "title",
+          "shortDescription", 
+          "hashtags",
+          "callToAction",
+          "brandInfo"
+        ]
+      }
+    },
+    "youtube": {
+      "name": "YouTube",
+      "icon": "🎥",
+      "description": "Video platform descriptions",
+      "fields": {
+        "title": {
+          "show": true,
+          "maxLength": 100,
+          "required": true,
+          "label": "Video Title"
+        },
+        "shortDescription": {
+          "show": false
+        },
+        "longDescription": {
+          "show": true,
+          "maxLength": 3000,
+          "required": true,
+          "label": "Video Description"
+        },
+        "hashtags": {
+          "show": true,
+          "maxCount": 10,
+          "required": true,
+          "label": "Tags"
+        },
+        "keywords": {
+          "show": true,
+          "maxCount": 15,
+          "required": true,
+          "label": "SEO Keywords"
+        },
+        "brandInfo": {
+          "show": true,
+          "required": true,
+          "label": "Channel Info"
+        },
+        "callToAction": {
+          "show": true,
+          "maxLength": 100,
+          "required": true,
+          "label": "Subscribe CTA"
+        }
+      },
+      "formatting": {
+        "style": "detailed",
+        "maxTotalLength": 5000,
+        "lineBreaks": "double",
+        "emphasis": "CAPS",
+        "structure": [
+          "longDescription",
+          "keywords",
+          "callToAction",
+          "hashtags",
+          "brandInfo"
+        ]
+      }
+    },
+    "tiktok": {
+      "name": "TikTok",
+      "icon": "🎵",
+      "description": "Short-form video platform",
+      "fields": {
+        "title": {
+          "show": false
+        },
+        "shortDescription": {
+          "show": true,
+          "maxLength": 150,
+          "required": true,
+          "label": "Caption"
+        },
+        "longDescription": {
+          "show": false
+        },
+        "hashtags": {
+          "show": true,
+          "maxCount": 5,
+          "required": true,
+          "label": "Trending Tags"
+        },
+        "keywords": {
+          "show": false
+        },
+        "brandInfo": {
+          "show": true,
+          "required": false,
+          "label": "Profile Link"
+        },
+        "callToAction": {
+          "show": true,
+          "maxLength": 30,
+          "required": false,
+          "label": "Action"
+        }
+      },
+      "formatting": {
+        "style": "casual",
+        "maxTotalLength": 300,
+        "lineBreaks": "none",
+        "emphasis": "emoji",
+        "structure": [
+          "shortDescription",
+          "hashtags", 
+          "callToAction",
+          "brandInfo"
+        ]
+      }
+    },
+    "linkedin": {
+      "name": "LinkedIn",
+      "icon": "💼",
+      "description": "Professional networking platform",
+      "fields": {
+        "title": {
+          "show": true,
+          "maxLength": 150,
+          "required": true,
+          "label": "Professional Title"
+        },
+        "shortDescription": {
+          "show": false
+        },
+        "longDescription": {
+          "show": true,
+          "maxLength": 1300,
+          "required": true,
+          "label": "Professional Description"
+        },
+        "hashtags": {
+          "show": true,
+          "maxCount": 5,
+          "required": true,
+          "label": "Professional Tags"
+        },
+        "keywords": {
+          "show": true,
+          "maxCount": 10,
+          "required": false,
+          "label": "Industry Keywords"
+        },
+        "brandInfo": {
+          "show": true,
+          "required": true,
+          "label": "Company Info"
+        },
+        "callToAction": {
+          "show": true,
+          "maxLength": 80,
+          "required": true,
+          "label": "Professional CTA"
+        }
+      },
+      "formatting": {
+        "style": "professional",
+        "maxTotalLength": 3000,
+        "lineBreaks": "double",
+        "emphasis": "strategic_caps",
+        "structure": [
+          "title",
+          "longDescription",
+          "callToAction",
+          "keywords",
+          "hashtags",
+          "brandInfo"
+        ]
+      }
+    },
+    "facebook": {
+      "name": "Facebook",
+      "icon": "👥",
+      "description": "Social networking platform",
+      "fields": {
+        "title": {
+          "show": true,
+          "maxLength": 120,
+          "required": false,
+          "label": "Post Title"
+        },
+        "shortDescription": {
+          "show": true,
+          "maxLength": 500,
+          "required": true,
+          "label": "Post Content"
+        },
+        "longDescription": {
+          "show": false
+        },
+        "hashtags": {
+          "show": true,
+          "maxCount": 3,
+          "required": false,
+          "label": "Hashtags"
+        },
+        "keywords": {
+          "show": false
+        },
+        "brandInfo": {
+          "show": true,
+          "required": true,
+          "label": "Page Info"
+        },
+        "callToAction": {
+          "show": true,
+          "maxLength": 60,
+          "required": false,
+          "label": "Engagement CTA"
+        }
+      },
+      "formatting": {
+        "style": "social",
+        "maxTotalLength": 2000,
+        "lineBreaks": "single",
+        "emphasis": "natural",
+        "structure": [
+          "title",
+          "shortDescription",
+          "callToAction",
+          "hashtags",
+          "brandInfo"
+        ]
+      }
+    },
+    "twitter": {
+      "name": "Twitter/X",
+      "icon": "🐦",
+      "description": "Microblogging platform",
+      "fields": {
+        "title": {
+          "show": false
+        },
+        "shortDescription": {
+          "show": true,
+          "maxLength": 200,
+          "required": true,
+          "label": "Tweet Content"
+        },
+        "longDescription": {
+          "show": false
+        },
+        "hashtags": {
+          "show": true,
+          "maxCount": 2,
+          "required": true,
+          "label": "Tweet Tags"
+        },
+        "keywords": {
+          "show": false
+        },
+        "brandInfo": {
+          "show": true,
+          "required": false,
+          "label": "Handle"
+        },
+        "callToAction": {
+          "show": true,
+          "maxLength": 25,
+          "required": false,
+          "label": "Action"
+        }
+      },
+      "formatting": {
+        "style": "concise",
+        "maxTotalLength": 280,
+        "lineBreaks": "none", 
+        "emphasis": "hashtags",
+        "structure": [
+          "shortDescription",
+          "hashtags",
+          "callToAction",
+          "brandInfo"
+        ]
+      }
+    },
+    "pinterest": {
+      "name": "Pinterest",
+      "icon": "📌",
+      "description": "Visual discovery platform",
+      "fields": {
+        "title": {
+          "show": true,
+          "maxLength": 100,
+          "required": true,
+          "label": "Pin Title"
+        },
+        "shortDescription": {
+          "show": true,
+          "maxLength": 400,
+          "required": true,
+          "label": "Pin Description"
+        },
+        "longDescription": {
+          "show": false
+        },
+        "hashtags": {
+          "show": true,
+          "maxCount": 10,
+          "required": true,
+          "label": "Pinterest Tags"
+        },
+        "keywords": {
+          "show": true,
+          "maxCount": 8,
+          "required": true,
+          "label": "Search Keywords"
+        },
+        "brandInfo": {
+          "show": true,
+          "required": true,
+          "label": "Board Info"
+        },
+        "callToAction": {
+          "show": true,
+          "maxLength": 50,
+          "required": false,
+          "label": "Pin CTA"
+        }
+      },
+      "formatting": {
+        "style": "descriptive",
+        "maxTotalLength": 1000,
+        "lineBreaks": "single",
+        "emphasis": "keywords",
+        "structure": [
+          "title",
+          "shortDescription",
+          "keywords",
+          "hashtags",
+          "callToAction",
+          "brandInfo"
+        ]
+      }
+    }
+  },
+  "templateTypes": {
+    "news": {
+      "name": "News & Announcements",
+      "icon": "📰",
+      "description": "Breaking news, updates, announcements",
+      "defaultContent": {
+        "title": "Breaking: [Your News Title]",
+        "shortDescription": "Quick summary of the news or announcement...",
+        "longDescription": "Detailed explanation of the news, including background, implications, and what this means for your audience...",
+        "hashtags": ["#News", "#Announcement"],
+        "keywords": ["news", "update", "announcement", "breaking"],
+        "callToAction": "Read more →",
+        "brandInfo": {
+          "name": "3C Thread To Success",
+          "website": "www.3c-innergrowth.com",
+          "email": "3c.innertherapy@gmail.com"
+        }
+      }
+    },
+    "product": {
+      "name": "Product Launch",
+      "icon": "🚀", 
+      "description": "New product or service announcements",
+      "defaultContent": {
+        "title": "Introducing: [Product Name]",
+        "shortDescription": "Exciting new [product/service] that will transform how you...",
+        "longDescription": "Comprehensive overview of the new product, its features, benefits, and how it solves specific problems for your audience...",
+        "hashtags": ["#NewProduct", "#Innovation"],
+        "keywords": ["launch", "new", "product", "innovation", "solution"],
+        "callToAction": "Learn more →",
+        "brandInfo": {
+          "name": "3C Thread To Success", 
+          "website": "www.3c-innergrowth.com",
+          "email": "3c.innertherapy@gmail.com"
+        }
+      }
+    },
+    "educational": {
+      "name": "Educational Content",
+      "icon": "🎓",
+      "description": "Tips, tutorials, how-to guides",
+      "defaultContent": {
+        "title": "How to: [Educational Topic]",
+        "shortDescription": "Learn the essential steps to master [topic] with this quick guide...",
+        "longDescription": "Step-by-step tutorial covering everything you need to know about [topic], including practical tips, common mistakes to avoid, and expert insights...",
+        "hashtags": ["#Education", "#Tips"],
+        "keywords": ["tutorial", "how-to", "guide", "learn", "tips"],
+        "callToAction": "Start learning →",
+        "brandInfo": {
+          "name": "3C Thread To Success",
+          "website": "www.3c-innergrowth.com", 
+          "email": "3c.innertherapy@gmail.com"
+        }
+      }
+    },
+    "promotional": {
+      "name": "Promotional Content",
+      "icon": "🎯",
+      "description": "Special offers, discounts, events",
+      "defaultContent": {
+        "title": "Special Offer: [Promotion Details]",
+        "shortDescription": "Limited time offer! Get [discount/benefit] when you...",
+        "longDescription": "Exclusive promotion details, terms and conditions, deadline information, and clear instructions on how to take advantage of this special offer...",
+        "hashtags": ["#SpecialOffer", "#LimitedTime"],
+        "keywords": ["offer", "discount", "special", "limited", "exclusive"],
+        "callToAction": "Claim now →",
+        "brandInfo": {
+          "name": "3C Thread To Success",
+          "website": "www.3c-innergrowth.com",
+          "email": "3c.innertherapy@gmail.com"
+        }
+      }
+    }
+  },
+  "brandDefaults": {
+    "name": "3C Thread To Success",
+    "website": "www.3c-innergrowth.com", 
+    "email": "3c.innertherapy@gmail.com",
+    "standardHashtags": ["#3CThreadToSuccess", "#InnerGrowth"],
+    "colors": {
+      "primary": "#997a64",
+      "secondary": "#61d8e6", 
+      "accent": "#a49079"
+    }
+  }
+}
 
