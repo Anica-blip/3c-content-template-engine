@@ -1,1 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3C Content Template Engine</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="app-header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo-section">
+                    <h1 class="app-title">3C Content Engine</h1>
+                    <span class="app-subtitle">Create • Customize • Convert</span>
+                </div>
+                <nav class="header-nav">
+                    <button class="nav-btn active" data-section="builder">Builder</button>
+                    <button class="nav-btn" data-section="templates">Templates</button>
+                    <button class="nav-btn" data-section="analytics">Analytics</button>
+                </nav>
+                <div class="header-actions">
+                    <button id="export-all" class="btn btn-outline">Export All</button>
+                    <button id="settings-btn" class="btn btn-secondary">Settings</button>
+                </div>
+            </div>
+        </div>
+    </header>
 
+    <!-- Main Content -->
+    <main class="app-main">
+        <div class="container">
+            <!-- Builder Section -->
+            <section id="builder-section" class="app-section active">
+                <div class="section-header">
+                    <h2>Content Template Builder</h2>
+                    <p>Create platform-optimized content templates with intelligent suggestions and real-time validation.</p>
+                </div>
+
+                <div class="builder-layout">
+                    <!-- Platform Selection -->
+                    <div class="platform-selection">
+                        <div class="selection-header">
+                            <h3>Select Platform</h3>
+                            <div class="platform-stats" id="platform-stats">
+                                <span class="stat">0 platforms loaded</span>
+                            </div>
+                        </div>
+                        <select id="platform-selector" class="platform-selector">
+                            <option value="">Choose your platform...</option>
+                        </select>
+                        <div class="platform-info" id="platform-info">
+                            <p class="info-text">Select a platform to see specific features and limitations</p>
+                        </div>
+                    </div>
+
+                    <!-- Template Builder -->
+                    <div class="template-builder-container">
+                        <div id="template-builder" class="template-builder">
+                            <div class="builder-placeholder">
+                                <div class="placeholder-icon">📝</div>
+                                <h3>Ready to Create</h3>
+                                <p>Select a platform above to start building your content template</p>
+                                <div class="quick-actions">
+                                    <button class="btn btn-outline" id="load-template-btn">Load Existing Template</button>
+                                    <button class="btn btn-outline" id="import-template-btn">Import Template</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Live Preview -->
+                    <div class="preview-panel">
+                        <div class="preview-header">
+                            <h3>Live Preview</h3>
+                            <div class="preview-controls">
+                                <button class="preview-btn active" data-view="mobile">📱</button>
+                                <button class="preview-btn" data-view="desktop">🖥️</button>
+                                <button class="preview-btn" data-view="code">{ }</button>
+                            </div>
+                        </div>
+                        <div id="content-preview" class="content-preview">
+                            <div class="preview-placeholder">
+                                <div class="preview-placeholder-icon">👁️</div>
+                                <p>Your content preview will appear here as you type</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Templates Section -->
+            <section id="templates-section" class="app-section">
+                <div class="section-header">
+                    <h2>Saved Templates</h2>
+                    <p>Manage and organize your content templates for quick reuse across platforms.</p>
+                </div>
+
+                <div class="templates-layout">
+                    <div class="templates-sidebar">
+                        <div class="templates-search">
+                            <input type="text" id="template-search" placeholder="Search templates..." class="search-input">
+                        </div>
+                        <div class="templates-filters">
+                            <h4>Filter by Platform</h4>
+                            <div id="platform-filters" class="filter-group">
+                                <!-- Platform filters will be populated dynamically -->
+                            </div>
+                            <h4>Filter by Type</h4>
+                            <div class="filter-group">
+                                <label><input type="checkbox" value="recent"> Recent</label>
+                                <label><input type="checkbox" value="favorites"> Favorites</label>
+                                <label><input type="checkbox" value="shared"> Shared</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="templates-grid" id="templates-grid">
+                        <div class="templates-placeholder">
+                            <div class="placeholder-icon">📋</div>
+                            <h3>No Templates Yet</h3>
+                            <p>Create your first template using the Builder to see it here</p>
+                            <button class="btn btn-primary" onclick="switchSection('builder')">Create Template</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Analytics Section -->
+            <section id="analytics-section" class="app-section">
+                <div class="section-header">
+                    <h2>Template Analytics</h2>
+                    <p>Track template performance and optimize your content strategy.</p>
+                </div>
+
+                <div class="analytics-layout">
+                    <div class="analytics-cards">
+                        <div class="analytics-card">
+                            <div class="card-header">
+                                <h3>Template Usage</h3>
+                                <span class="card-period">Last 30 days</span>
+                            </div>
+                            <div class="card-metric">
+                                <span class="metric-value" id="usage-count">0</span>
+                                <span class="metric-label">Templates Created</span>
+                            </div>
+                        </div>
+
+                        <div class="analytics-card">
+                            <div class="card-header">
+                                <h3>Most Used Platform</h3>
+                                <span class="card-period">All time</span>
+                            </div>
+                            <div class="card-metric">
+                                <span class="metric-value" id="top-platform">-</span>
+                                <span class="metric-label">Platform</span>
+                            </div>
+                        </div>
+
+                        <div class="analytics-card">
+                            <div class="card-header">
+                                <h3>Content Efficiency</h3>
+                                <span class="card-period">Average</span>
+                            </div>
+                            <div class="card-metric">
+                                <span class="metric-value" id="efficiency-score">-</span>
+                                <span class="metric-label">Score</span>
+                            </div>
+                        </div>
+
+                        <div class="analytics-card">
+                            <div class="card-header">
+                                <h3>Templates Saved</h3>
+                                <span class="card-period">Total</span>
+                            </div>
+                            <div class="card-metric">
+                                <span class="metric-value" id="saved-count">0</span>
+                                <span class="metric-label">Templates</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="analytics-charts">
+                        <div class="chart-container">
+                            <h3>Platform Usage Over Time</h3>
+                            <div id="usage-chart" class="chart-placeholder">
+                                <p>Chart will be generated based on your template usage</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-info">
+                    <p>&copy; 2025 3C Content Template Engine. Streamline your content creation workflow.</p>
+                </div>
+                <div class="footer-links">
+                    <a href="#" class="footer-link">Documentation</a>
+                    <a href="#" class="footer-link">Support</a>
+                    <a href="#" class="footer-link">GitHub</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modals -->
+    <!-- Template Loader Modal -->
+    <div id="template-loader-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Load Template</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="template-list" id="loadable-templates">
+                    <!-- Templates will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Settings</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h4>General</h4>
+                    <label>
+                        <input type="checkbox" id="auto-save-setting" checked> 
+                        Enable auto-save
+                    </label>
+                    <label>
+                        <input type="checkbox" id="live-preview-setting" checked> 
+                        Enable live preview
+                    </label>
+                </div>
+                <div class="settings-section">
+                    <h4>Notifications</h4>
+                    <label>
+                        <input type="checkbox" id="character-warnings" checked> 
+                        Character limit warnings
+                    </label>
+                    <label>
+                        <input type="checkbox" id="hashtag-suggestions" checked> 
+                        Hashtag suggestions
+                    </label>
+                </div>
+                <div class="settings-section">
+                    <h4>Data</h4>
+                    <button class="btn btn-outline" id="export-data-btn">Export All Data</button>
+                    <button class="btn btn-outline" id="import-data-btn">Import Data</button>
+                    <button class="btn btn-danger" id="clear-data-btn">Clear All Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generation Modal -->
+    <div id="generation-modal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Generate Content</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="generation-options">
+                    <h4>Generation Options</h4>
+                    <div class="option-group">
+                        <label>
+                            Variations: 
+                            <select id="variation-count">
+                                <option value="1">1</option>
+                                <option value="3" selected>3</option>
+                                <option value="5">5</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="option-group">
+                        <label>
+                            Style: 
+                            <select id="generation-style">
+                                <option value="original">Keep Original Style</option>
+                                <option value="professional">More Professional</option>
+                                <option value="casual">More Casual</option>
+                                <option value="engaging">More Engaging</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+                <div class="generation-results" id="generation-results">
+                    <p>Generated content will appear here...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="regenerate-btn">Regenerate</button>
+                <button class="btn btn-primary" id="use-generated-btn">Use Selected</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notification-container" class="notification-container"></div>
+
+    <!-- Scripts -->
+    <script src="script.js"></script>
+    <script>
+        // Additional UI functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Navigation handling
+            const navButtons = document.querySelectorAll('.nav-btn');
+            const sections = document.querySelectorAll('.app-section');
+
+            navButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const sectionName = btn.dataset.section;
+                    switchSection(sectionName);
+                });
+            });
+
+            // Modal handling
+            const modals = document.querySelectorAll('.modal');
+            const modalCloses = document.querySelectorAll('.modal-close');
+
+            modalCloses.forEach(close => {
+                close.addEventListener('click', () => {
+                    close.closest('.modal').style.display = 'none';
+                });
+            });
+
+            // Close modals on outside click
+            modals.forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.style.display = 'none';
+                    }
+                });
+            });
+
+            // Settings button
+            document.getElementById('settings-btn').addEventListener('click', () => {
+                document.getElementById('settings-modal').style.display = 'flex';
+            });
+
+            // Preview controls
+            const previewBtns = document.querySelectorAll('.preview-btn');
+            previewBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    previewBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    updatePreviewView(btn.dataset.view);
+                });
+            });
+
+            // Load template button
+            document.getElementById('load-template-btn').addEventListener('click', () => {
+                showTemplateLoader();
+            });
+
+            // Update platform stats
+            updatePlatformStats();
+        });
+
+        function switchSection(sectionName) {
+            // Update navigation
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.section === sectionName);
+            });
+
+            // Update sections
+            document.querySelectorAll('.app-section').forEach(section => {
+                section.classList.toggle('active', section.id === `${sectionName}-section`);
+            });
+
+            // Update analytics if switching to analytics
+            if (sectionName === 'analytics') {
+                updateAnalytics();
+            }
+
+            // Update templates if switching to templates
+            if (sectionName === 'templates') {
+                loadTemplatesView();
+            }
+        }
+
+        function updatePreviewView(view) {
+            const preview = document.getElementById('content-preview');
+            preview.className = `content-preview preview-${view}`;
+            
+            if (window.templateEngine) {
+                window.templateEngine.updatePreview();
+            }
+        }
+
+        function showTemplateLoader() {
+            const modal = document.getElementById('template-loader-modal');
+            const templateList = document.getElementById('loadable-templates');
+            
+            // Populate with saved templates
+            if (window.templateEngine && window.templateEngine.templates.size > 0) {
+                templateList.innerHTML = '';
+                window.templateEngine.templates.forEach((template, id) => {
+                    const templateItem = document.createElement('div');
+                    templateItem.className = 'template-item';
+                    templateItem.innerHTML = `
+                        <div class="template-info">
+                            <h4>${template.name}</h4>
+                            <p>Platform: ${template.platform} | Created: ${new Date(template.created).toLocaleDateString()}</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="loadTemplate('${id}')">Load</button>
+                    `;
+                    templateList.appendChild(templateItem);
+                });
+            } else {
+                templateList.innerHTML = '<p>No saved templates found</p>';
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        function loadTemplate(templateId) {
+            if (window.templateEngine) {
+                window.templateEngine.loadTemplate(templateId);
+            }
+            document.getElementById('template-loader-modal').style.display = 'none';
+        }
+
+        function updatePlatformStats() {
+            const statsElement = document.getElementById('platform-stats');
+            if (window.templateEngine && window.templateEngine.platforms) {
+                const count = Object.keys(window.templateEngine.platforms).length;
+                statsElement.innerHTML = `<span class="stat">${count} platforms loaded</span>`;
+            }
+        }
+
+        function updateAnalytics() {
+            if (!window.templateEngine) return;
+
+            // Update usage count
+            const usageCount = window.templateEngine.templates.size;
+            document.getElementById('usage-count').textContent = usageCount;
+            document.getElementById('saved-count').textContent = usageCount;
+
+            // Find most used platform
+            const platformUsage = {};
+            window.templateEngine.templates.forEach(template => {
+                const platform = template.platform;
+                platformUsage[platform] = (platformUsage[platform] || 0) + 1;
+            });
+
+            const topPlatform = Object.keys(platformUsage).reduce((a, b) => 
+                platformUsage[a] > platformUsage[b] ? a : b, '-'
+            );
+            
+            document.getElementById('top-platform').textContent = 
+                topPlatform !== '-' ? window.templateEngine.platforms[topPlatform]?.name || topPlatform : '-';
+
+            // Calculate efficiency score (placeholder)
+            const efficiency = usageCount > 0 ? Math.min(100, usageCount * 10 + Math.random() * 20) : 0;
+            document.getElementById('efficiency-score').textContent = 
+                efficiency > 0 ? Math.round(efficiency) + '%' : '-';
+        }
+
+        function loadTemplatesView() {
+            const grid = document.getElementById('templates-grid');
+            
+            if (!window.templateEngine || window.templateEngine.templates.size === 0) {
+                grid.innerHTML = `
+                    <div class="templates-placeholder">
+                        <div class="placeholder-icon">📋</div>
+                        <h3>No Templates Yet</h3>
+                        <p>Create your first template using the Builder to see it here</p>
+                        <button class="btn btn-primary" onclick="switchSection('builder')">Create Template</button>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = '';
+            window.templateEngine.templates.forEach((template, id) => {
+                const templateCard = document.createElement('div');
+                templateCard.className = 'template-card';
+                templateCard.innerHTML = `
+                    <div class="template-card-header">
+                        <h3>${template.name}</h3>
+                        <div class="template-actions">
+                            <button class="btn-icon" onclick="editTemplate('${id}')" title="Edit">✏️</button>
+                            <button class="btn-icon" onclick="duplicateTemplate('${id}')" title="Duplicate">📋</button>
+                            <button class="btn-icon" onclick="deleteTemplate('${id}')" title="Delete">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="template-card-body">
+                        <p class="template-platform">${window.templateEngine.platforms[template.platform]?.name || template.platform}</p>
+                        <p class="template-date">Created: ${new Date(template.created).toLocaleDateString()}</p>
+                        <div class="template-preview">
+                            ${Object.keys(template.data.content).length} content sections, 
+                            ${template.data.hashtags.length} hashtags
+                        </div>
+                    </div>
+                    <div class="template-card-footer">
+                        <button class="btn btn-outline" onclick="loadTemplate('${id}')">Load</button>
+                        <button class="btn btn-primary" onclick="useTemplate('${id}')">Use Template</button>
+                    </div>
+                `;
+                grid.appendChild(templateCard);
+            });
+        }
+
+        function editTemplate(templateId) {
+            loadTemplate(templateId);
+            switchSection('builder');
+        }
+
+        function duplicateTemplate(templateId) {
+            if (window.templateEngine) {
+                const template = window.templateEngine.templates.get(templateId);
+                if (template) {
+                    const newTemplate = {
+                        ...template,
+                        id: window.templateEngine.generateTemplateId(),
+                        name: template.name + ' (Copy)',
+                        created: new Date().toISOString()
+                    };
+                    window.templateEngine.templates.set(newTemplate.id, newTemplate);
+                    window.templateEngine.saveTemplatesToStorage();
+                    loadTemplatesView();
+                }
+            }
+        }
+
+        function deleteTemplate(templateId) {
+            if (confirm('Are you sure you want to delete this template?')) {
+                if (window.templateEngine) {
+                    window.templateEngine.templates.delete(templateId);
+                    window.templateEngine.saveTemplatesToStorage();
+                    loadTemplatesView();
+                }
+            }
+        }
+
+        function useTemplate(templateId) {
+            loadTemplate(templateId);
+            switchSection('builder');
+        }
+    </script>
+</body>
+</html>
