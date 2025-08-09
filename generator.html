@@ -1,1 +1,1580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Generator - 3C Template Engine</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="app-header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo-section">
+                    <h1 class="app-title">3C Content Generator</h1>
+                    <span class="app-subtitle">AI-Powered Content Creation</span>
+                </div>
+                <nav class="header-nav">
+                    <a href="index.html" class="nav-btn">← Back to Builder</a>
+                </nav>
+                <div class="header-actions">
+                    <button id="save-generated" class="btn btn-outline">Save Results</button>
+                    <button id="export-generated" class="btn btn-secondary">Export</button>
+                </div>
+            </div>
+        </div>
+    </header>
 
+    <!-- Main Content -->
+    <main class="app-main">
+        <div class="container">
+            <!-- Generator Setup -->
+            <section class="generator-setup">
+                <div class="setup-header">
+                    <h2>Content Generation Wizard</h2>
+                    <p>Transform your ideas into platform-optimized content with AI assistance</p>
+                </div>
+
+                <div class="wizard-container">
+                    <!-- Step Indicator -->
+                    <div class="wizard-steps">
+                        <div class="step active" data-step="1">
+                            <div class="step-number">1</div>
+                            <div class="step-label">Input</div>
+                        </div>
+                        <div class="step-connector"></div>
+                        <div class="step" data-step="2">
+                            <div class="step-number">2</div>
+                            <div class="step-label">Platform</div>
+                        </div>
+                        <div class="step-connector"></div>
+                        <div class="step" data-step="3">
+                            <div class="step-number">3</div>
+                            <div class="step-label">Settings</div>
+                        </div>
+                        <div class="step-connector"></div>
+                        <div class="step" data-step="4">
+                            <div class="step-number">4</div>
+                            <div class="step-label">Generate</div>
+                        </div>
+                    </div>
+
+                    <!-- Step 1: Content Input -->
+                    <div class="wizard-step active" id="step-1">
+                        <div class="step-content">
+                            <h3>What would you like to create content about?</h3>
+                            <div class="input-methods">
+                                <div class="input-method active" data-method="text">
+                                    <div class="method-icon">📝</div>
+                                    <h4>Text Input</h4>
+                                    <p>Describe your content idea in your own words</p>
+                                </div>
+                                <div class="input-method" data-method="template">
+                                    <div class="method-icon">📋</div>
+                                    <h4>Load Template</h4>
+                                    <p>Start from a saved template and modify</p>
+                                </div>
+                                <div class="input-method" data-method="url">
+                                    <div class="method-icon">🔗</div>
+                                    <h4>From URL</h4>
+                                    <p>Extract content from a webpage or article</p>
+                                </div>
+                                <div class="input-method" data-method="prompt">
+                                    <div class="method-icon">🎯</div>
+                                    <h4>Guided Prompts</h4>
+                                    <p>Answer questions to build your content</p>
+                                </div>
+                            </div>
+
+                            <!-- Text Input Area -->
+                            <div class="input-area" id="text-input-area">
+                                <label for="content-topic">Content Topic/Idea</label>
+                                <textarea 
+                                    id="content-topic" 
+                                    placeholder="Describe what you want to create content about. Be as detailed as possible - include your main message, target audience, and any specific points you want to cover..."
+                                    rows="6"
+                                ></textarea>
+                                <div class="input-tips">
+                                    <strong>Tips:</strong> Include keywords, tone preferences, and specific details for better results.
+                                </div>
+                            </div>
+
+                            <!-- Template Selection -->
+                            <div class="input-area hidden" id="template-input-area">
+                                <label>Select a Template to Modify</label>
+                                <div id="template-selector" class="template-selector">
+                                    <!-- Templates will be loaded here -->
+                                </div>
+                            </div>
+
+                            <!-- URL Input -->
+                            <div class="input-area hidden" id="url-input-area">
+                                <label for="source-url">Source URL</label>
+                                <div class="url-input-group">
+                                    <input 
+                                        type="url" 
+                                        id="source-url" 
+                                        placeholder="https://example.com/article"
+                                    >
+                                    <button type="button" id="extract-content" class="btn btn-primary">Extract</button>
+                                </div>
+                                <div id="extracted-content" class="extracted-content hidden">
+                                    <h4>Extracted Content Preview</h4>
+                                    <div class="content-preview"></div>
+                                </div>
+                            </div>
+
+                            <!-- Guided Prompts -->
+                            <div class="input-area hidden" id="prompt-input-area">
+                                <div class="prompt-questions">
+                                    <div class="question-group">
+                                        <label>What is your main goal with this content?</label>
+                                        <select id="content-goal">
+                                            <option value="">Select a goal...</option>
+                                            <option value="awareness">Build brand awareness</option>
+                                            <option value="engagement">Increase engagement</option>
+                                            <option value="education">Educate audience</option>
+                                            <option value="sales">Drive sales/conversions</option>
+                                            <option value="community">Build community</option>
+                                            <option value="thought-leadership">Establish thought leadership</option>
+                                        </select>
+                                    </div>
+                                    <div class="question-group">
+                                        <label>Who is your target audience?</label>
+                                        <input type="text" id="target-audience" placeholder="e.g., Small business owners, Tech enthusiasts, Young professionals...">
+                                    </div>
+                                    <div class="question-group">
+                                        <label>What's the main message or value you want to communicate?</label>
+                                        <textarea id="main-message" rows="3" placeholder="Describe the key takeaway you want your audience to have..."></textarea>
+                                    </div>
+                                    <div class="question-group">
+                                        <label>What action do you want people to take after seeing this content?</label>
+                                        <input type="text" id="call-to-action" placeholder="e.g., Visit website, Sign up, Share, Comment...">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Platform Selection -->
+                    <div class="wizard-step" id="step-2">
+                        <div class="step-content">
+                            <h3>Choose Your Platforms</h3>
+                            <p>Select one or more platforms for optimized content generation</p>
+                            
+                            <div class="platform-grid" id="platform-grid">
+                                <!-- Platforms will be loaded dynamically -->
+                            </div>
+
+                            <div class="platform-details" id="platform-details">
+                                <h4>Selected Platform Details</h4>
+                                <div class="details-content">
+                                    <p>Select a platform above to see its specifications and optimization features.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Generation Settings -->
+                    <div class="wizard-step" id="step-3">
+                        <div class="step-content">
+                            <h3>Customize Generation Settings</h3>
+                            
+                            <div class="settings-grid">
+                                <div class="settings-group">
+                                    <h4>Content Style</h4>
+                                    <div class="setting-item">
+                                        <label>Tone of Voice</label>
+                                        <select id="tone-setting">
+                                            <option value="professional">Professional</option>
+                                            <option value="casual">Casual & Friendly</option>
+                                            <option value="enthusiastic">Enthusiastic</option>
+                                            <option value="authoritative">Authoritative</option>
+                                            <option value="humorous">Humorous</option>
+                                            <option value="inspirational">Inspirational</option>
+                                            <option value="educational">Educational</option>
+                                        </select>
+                                    </div>
+                                    <div class="setting-item">
+                                        <label>Writing Style</label>
+                                        <select id="style-setting">
+                                            <option value="conversational">Conversational</option>
+                                            <option value="formal">Formal</option>
+                                            <option value="storytelling">Storytelling</option>
+                                            <option value="list-based">List-based</option>
+                                            <option value="question-based">Question-based</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="settings-group">
+                                    <h4>Content Length</h4>
+                                    <div class="setting-item">
+                                        <label>Content Length Preference</label>
+                                        <div class="length-options">
+                                            <label class="radio-option">
+                                                <input type="radio" name="length" value="short" checked>
+                                                <span>Short & Punchy</span>
+                                            </label>
+                                            <label class="radio-option">
+                                                <input type="radio" name="length" value="medium">
+                                                <span>Medium Length</span>
+                                            </label>
+                                            <label class="radio-option">
+                                                <input type="radio" name="length" value="long">
+                                                <span>Detailed & Comprehensive</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="settings-group">
+                                    <h4>Hashtags & Keywords</h4>
+                                    <div class="setting-item">
+                                        <label>Industry/Niche</label>
+                                        <input type="text" id="industry-keywords" placeholder="e.g., digital marketing, sustainable fashion, tech startups...">
+                                    </div>
+                                    <div class="setting-item">
+                                        <label>Specific Keywords to Include</label>
+                                        <input type="text" id="specific-keywords" placeholder="Comma-separated keywords to include in content">
+                                    </div>
+                                    <div class="setting-item">
+                                        <label>
+                                            <input type="checkbox" id="trending-hashtags" checked>
+                                            Include trending hashtags
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="settings-group">
+                                    <h4>Advanced Options</h4>
+                                    <div class="setting-item">
+                                        <label>Number of Variations</label>
+                                        <select id="variation-count">
+                                            <option value="1">1 Version</option>
+                                            <option value="3" selected>3 Versions</option>
+                                            <option value="5">5 Versions</option>
+                                            <option value="10">10 Versions</option>
+                                        </select>
+                                    </div>
+                                    <div class="setting-item">
+                                        <label>
+                                            <input type="checkbox" id="include-emojis" checked>
+                                            Include relevant emojis
+                                        </label>
+                                    </div>
+                                    <div class="setting-item">
+                                        <label>
+                                            <input type="checkbox" id="include-cta">
+                                            Include call-to-action
+                                        </label>
+                                    </div>
+                                    <div class="setting-item">
+                                        <label>
+                                            <input type="checkbox" id="optimize-seo">
+                                            SEO optimization
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Generate & Results -->
+                    <div class="wizard-step" id="step-4">
+                        <div class="step-content">
+                            <h3>Generate Your Content</h3>
+                            
+                            <div class="generation-summary" id="generation-summary">
+                                <h4>Generation Summary</h4>
+                                <div class="summary-grid">
+                                    <div class="summary-item">
+                                        <span class="label">Input Method:</span>
+                                        <span class="value" id="summary-method">-</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="label">Platforms:</span>
+                                        <span class="value" id="summary-platforms">-</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="label">Tone:</span>
+                                        <span class="value" id="summary-tone">-</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="label">Variations:</span>
+                                        <span class="value" id="summary-variations">-</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="generation-actions">
+                                <button id="start-generation" class="btn btn-primary btn-large">
+                                    <span class="btn-icon">🚀</span>
+                                    Generate Content
+                                </button>
+                                <button id="preview-settings" class="btn btn-outline">Preview Settings</button>
+                            </div>
+
+                            <!-- Generation Progress -->
+                            <div class="generation-progress hidden" id="generation-progress">
+                                <div class="progress-header">
+                                    <h4>Generating Your Content...</h4>
+                                    <div class="progress-status">Step <span id="progress-step">1</span> of 4</div>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="progress-fill"></div>
+                                </div>
+                                <div class="progress-steps">
+                                    <div class="progress-step-item active">
+                                        <div class="step-icon">🔍</div>
+                                        <div class="step-text">Analyzing input</div>
+                                    </div>
+                                    <div class="progress-step-item">
+                                        <div class="step-icon">🎯</div>
+                                        <div class="step-text">Optimizing for platforms</div>
+                                    </div>
+                                    <div class="progress-step-item">
+                                        <div class="step-icon">✍️</div>
+                                        <div class="step-text">Creating variations</div>
+                                    </div>
+                                    <div class="progress-step-item">
+                                        <div class="step-icon">✨</div>
+                                        <div class="step-text">Finalizing content</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Results Section -->
+                            <div class="generation-results hidden" id="generation-results">
+                                <div class="results-header">
+                                    <h4>Generated Content</h4>
+                                    <div class="results-actions">
+                                        <button id="regenerate-all" class="btn btn-outline">🔄 Regenerate All</button>
+                                        <button id="export-results" class="btn btn-secondary">📥 Export Results</button>
+                                    </div>
+                                </div>
+                                <div class="results-grid" id="results-grid">
+                                    <!-- Generated content will appear here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Navigation -->
+                    <div class="wizard-navigation">
+                        <button id="prev-step" class="btn btn-outline" disabled>← Previous</button>
+                        <button id="next-step" class="btn btn-primary">Next →</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-info">
+                    <p>&copy; 2025 3C Content Template Engine. AI-powered content generation.</p>
+                </div>
+                <div class="footer-links">
+                    <a href="#" class="footer-link">API Documentation</a>
+                    <a href="#" class="footer-link">Usage Guidelines</a>
+                    <a href="index.html" class="footer-link">Template Builder</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Generation Result Modal -->
+    <div id="result-detail-modal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Content Details</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="result-detail-content">
+                    <div class="platform-info">
+                        <h4 id="detail-platform">Platform</h4>
+                        <div class="platform-stats" id="detail-stats"></div>
+                    </div>
+                    <div class="content-sections">
+                        <div class="content-section">
+                            <h5>Generated Content</h5>
+                            <div class="content-text" id="detail-content"></div>
+                        </div>
+                        <div class="content-section">
+                            <h5>Hashtags</h5>
+                            <div class="hashtag-list" id="detail-hashtags"></div>
+                        </div>
+                        <div class="content-section">
+                            <h5>Performance Metrics</h5>
+                            <div class="metrics-grid" id="detail-metrics"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="regenerate-single">🔄 Regenerate This</button>
+                <button class="btn btn-secondary" id="copy-content">📋 Copy Content</button>
+                <button class="btn btn-primary" id="use-content">✅ Use This Content</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="script.js"></script>
+    <script>
+        // Generator-specific functionality
+        class ContentGenerator {
+            constructor() {
+                this.currentStep = 1;
+                this.totalSteps = 4;
+                this.generationData = {};
+                this.selectedPlatforms = new Set();
+                this.init();
+            }
+
+            init() {
+                this.loadPlatforms();
+                this.setupEventListeners();
+                this.loadExistingTemplates();
+                this.updateNavigationState();
+            }
+
+            async loadPlatforms() {
+                try {
+                    const response = await fetch('./platforms.json');
+                    const platforms = await response.json();
+                    this.renderPlatformGrid(platforms);
+                } catch (error) {
+                    console.error('Failed to load platforms:', error);
+                }
+            }
+
+            setupEventListeners() {
+                // Input method selection
+                document.querySelectorAll('.input-method').forEach(method => {
+                    method.addEventListener('click', () => this.selectInputMethod(method.dataset.method));
+                });
+
+                // Navigation
+                document.getElementById('next-step').addEventListener('click', () => this.nextStep());
+                document.getElementById('prev-step').addEventListener('click', () => this.prevStep());
+
+                // Generation
+                document.getElementById('start-generation').addEventListener('click', () => this.startGeneration());
+
+                // URL extraction
+                document.getElementById('extract-content').addEventListener('click', () => this.extractFromURL());
+
+                // Modal handling
+                document.querySelectorAll('.modal-close').forEach(close => {
+                    close.addEventListener('click', () => {
+                        close.closest('.modal').style.display = 'none';
+                    });
+                });
+            }
+
+            selectInputMethod(method) {
+                // Update active method
+                document.querySelectorAll('.input-method').forEach(m => m.classList.remove('active'));
+                document.querySelector(`[data-method="${method}"]`).classList.add('active');
+
+                // Show corresponding input area
+                document.querySelectorAll('.input-area').forEach(area => area.classList.add('hidden'));
+                document.getElementById(`${method}-input-area`).classList.remove('hidden');
+
+                this.generationData.inputMethod = method;
+            }
+
+            renderPlatformGrid(platforms) {
+                const grid = document.getElementById('platform-grid');
+                grid.innerHTML = '';
+
+                Object.entries(platforms).forEach(([key, platform]) => {
+                    const platformCard = document.createElement('div');
+                    platformCard.className = 'platform-card';
+                    platformCard.dataset.platform = key;
+                    
+                    platformCard.innerHTML = `
+                        <div class="platform-icon">${this.getPlatformIcon(key)}</div>
+                        <h4>${platform.name}</h4>
+                        <div class="platform-features">
+                            ${platform.features ? platform.features.slice(0, 2).map(f => `<span class="feature-tag">${f}</span>`).join('') : ''}
+                        </div>
+                        <div class="platform-limits">
+                            ${platform.character_limits ? Object.entries(platform.character_limits).slice(0, 1).map(([field, limit]) => 
+                                `<small>${field}: ${limit} chars</small>`
+                            ).join('') : ''}
+                        </div>
+                    `;
+
+                    platformCard.addEventListener('click', () => this.togglePlatform(key, platform));
+                    grid.appendChild(platformCard);
+                });
+            }
+
+            getPlatformIcon(platform) {
+                const icons = {
+                    instagram: '📷',
+                    linkedin: '💼',
+                    twitter: '🐦',
+                    facebook: '👥',
+                    tiktok: '🎵',
+                    youtube: '📺'
+                };
+                return icons[platform] || '📱';
+            }
+
+            togglePlatform(key, platform) {
+                const card = document.querySelector(`[data-platform="${key}"]`);
+                
+                if (this.selectedPlatforms.has(key)) {
+                    this.selectedPlatforms.delete(key);
+                    card.classList.remove('selected');
+                } else {
+                    this.selectedPlatforms.add(key);
+                    card.classList.add('selected');
+                }
+
+                this.updatePlatformDetails();
+                this.updateNavigationState();
+            }
+
+            updatePlatformDetails() {
+                const details = document.getElementById('platform-details');
+                const detailsContent = details.querySelector('.details-content');
+
+                if (this.selectedPlatforms.size === 0) {
+                    detailsContent.innerHTML = '<p>Select a platform above to see its specifications and optimization features.</p>';
+                    return;
+                }
+
+                const platformList = Array.from(this.selectedPlatforms).join(', ');
+                detailsContent.innerHTML = `
+                    <p><strong>Selected:</strong> ${platformList}</p>
+                    <p>Content will be optimized for ${this.selectedPlatforms.size} platform(s) with appropriate character limits, hashtag strategies, and formatting.</p>
+                `;
+            }
+
+            nextStep() {
+                if (this.currentStep < this.totalSteps && this.canProceed()) {
+                    this.currentStep++;
+                    this.showStep(this.currentStep);
+                    this.updateNavigationState();
+                    
+                    if (this.currentStep === 4) {
+                        this.updateGenerationSummary();
+                    }
+                }
+            }
+
+            prevStep() {
+                if (this.currentStep > 1) {
+                    this.currentStep--;
+                    this.showStep(this.currentStep);
+                    this.updateNavigationState();
+                }
+            }
+
+            showStep(stepNumber) {
+                // Update step indicators
+                document.querySelectorAll('.step').forEach((step, index) => {
+                    step.classList.toggle('active', index + 1 === stepNumber);
+                    step.classList.toggle('completed', index + 1 < stepNumber);
+                });
+
+                // Update step content
+                document.querySelectorAll('.wizard-step').forEach((step, index) => {
+                    step.classList.toggle('active', index + 1 === stepNumber);
+                });
+            }
+
+            updateNavigationState() {
+                const prevBtn = document.getElementById('prev-step');
+                const nextBtn = document.getElementById('next-step');
+
+                prevBtn.disabled = this.currentStep === 1;
+                
+                if (this.currentStep === this.totalSteps) {
+                    nextBtn.style.display = 'none';
+                } else {
+                    nextBtn.style.display = 'inline-flex';
+                    nextBtn.disabled = !this.canProceed();
+                }
+            }
+
+            canProceed() {
+                switch (this.currentStep) {
+                    case 1:
+                        return this.hasInputContent();
+                    case 2:
+                        return this.selectedPlatforms.size > 0;
+                    case 3:
+                        return true; // Settings are optional
+                    default:
+                        return true;
+                }
+            }
+
+            hasInputContent() {
+                const method = this.generationData.inputMethod || 'text';
+                switch (method) {
+                    case 'text':
+                        return document.getElementById('content-topic').value.trim().length > 0;
+                    case 'template':
+                        return this.generationData.selectedTemplate;
+                    case 'url':
+                        return this.generationData.extractedContent;
+                    case 'prompt':
+                        return document.getElementById('main-message').value.trim().length > 0;
+                    default:
+                        return false;
+                }
+            }
+
+            updateGenerationSummary() {
+                const method = this.generationData.inputMethod || 'text';
+                const platforms = Array.from(this.selectedPlatforms).join(', ');
+                const tone = document.getElementById('tone-setting').value;
+                const variations = document.getElementById('variation-count').value;
+
+                document.getElementById('summary-method').textContent = method.charAt(0).toUpperCase() + method.slice(1);
+                document.getElementById('summary-platforms').textContent = platforms || 'None selected';
+                document.getElementById('summary-tone').textContent = tone.charAt(0).toUpperCase() + tone.slice(1);
+                document.getElementById('summary-variations').textContent = variations;
+            }
+
+            async startGeneration() {
+                this.showGenerationProgress();
+                
+                // Simulate generation process
+                await this.simulateGeneration();
+                
+                this.hideGenerationProgress();
+                this.showGenerationResults();
+            }
+
+            showGenerationProgress() {
+                document.getElementById('generation-progress').classList.remove('hidden');
+                document.getElementById('generation-actions').style.display = 'none';
+            }
+
+            async simulateGeneration() {
+                const steps = [
+                    { text: 'Analyzing input', duration: 1000 },
+                    { text: 'Optimizing for platforms', duration: 1500 },
+                    { text: 'Creating variations', duration: 2000 },
+                    { text: 'Finalizing content', duration: 1000 }
+                ];
+
+                let progress = 0;
+                const progressFill = document.getElementById('progress-fill');
+                const progressStep = document.getElementById('progress-step');
+
+                for (let i = 0; i < steps.length; i++) {
+                    // Update progress bar
+                    progress = ((i + 1) / steps.length) * 100;
+                    progressFill.style.width = `${progress}%`;
+                    progressStep.textContent = i + 1;
+
+                    // Update step indicators
+                    document.querySelectorAll('.progress-step-item').forEach((item, index) => {
+                        item.classList.toggle('active', index === i);
+                        item.classList.toggle('completed', index < i);
+                    });
+
+                    await new Promise(resolve => setTimeout(resolve, steps[i].duration));
+                }
+            }
+
+            hideGenerationProgress() {
+                document.getElementById('generation-progress').classList.add('hidden');
+            }
+
+            showGenerationResults() {
+                document.getElementById('generation-results').classList.remove('hidden');
+                this.renderResults();
+            }
+
+            renderResults() {
+                const resultsGrid = document.getElementById('results-grid');
+                const variations = parseInt(document.getElementById('variation-count').value);
+                
+                resultsGrid.innerHTML = '';
+
+                // Generate mock results for each platform and variation
+                this.selectedPlatforms.forEach(platform => {
+                    for (let i = 1; i <= variations; i++) {
+                        const resultCard = this.createResultCard(platform, i);
+                        resultsGrid.appendChild(resultCard);
+                    }
+                });
+            }
+
+            createResultCard(platform, variation) {
+                const card = document.createElement('div');
+                card.className = 'result-card';
+                
+                const mockContent = this.generateMockContent(platform);
+                
+                card.innerHTML = `
+                    <div class="result-header">
+                        <div class="platform-info">
+                            <span class="platform-icon">${this.getPlatformIcon(platform)}</span>
+                            <span class="platform-name">${platform}</span>
+                        </div>
+                        <div class="variation-badge">V${variation}</div>
+                    </div>
+                    <div class="result-content">
+                        <div class="content-preview">${mockContent.text.substring(0, 150)}...</div>
+                        <div class="hashtags-preview">
+                            ${mockContent.hashtags.slice(0, 3).map(tag => `<span class="hashtag">#${tag}</span>`).join('')}
+                        </div>
+                    </div>
+                    <div class="result-metrics">
+                        <div class="metric">
+                            <span class="metric-label">Length:</span>
+                            <span class="metric-value">${mockContent.text.length} chars</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Hashtags:</span>
+                            <span class="metric-value">${mockContent.hashtags.length}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Score:</span>
+                            <span class="metric-value">${Math.floor(Math.random() * 20) + 80}%</span>
+                        </div>
+                    </div>
+                    <div class="result-actions">
+                        <button class="btn-icon" onclick="this.viewResultDetail('${platform}', ${variation})" title="View Details">👁️</button>
+                        <button class="btn-icon" onclick="this.copyResult('${platform}', ${variation})" title="Copy">📋</button>
+                        <button class="btn-icon" onclick="this.editResult('${platform}', ${variation})" title="Edit">✏️</button>
+                        <button class="btn-icon" onclick="this.regenerateResult('${platform}', ${variation})" title="Regenerate">🔄</button>
+                    </div>
+                `;
+                
+                return card;
+            }
+
+            generateMockContent(platform) {
+                const topics = [
+                    "Transform your productivity with these game-changing strategies that successful entrepreneurs swear by",
+                    "The future of sustainable business practices is here, and it's more accessible than you think",
+                    "Why remote work culture is reshaping how we define professional success in 2025",
+                    "Breaking down the latest industry trends that will impact your business this quarter"
+                ];
+
+                const hashtags = [
+                    ['productivity', 'entrepreneur', 'success', 'mindset', 'growth'],
+                    ['sustainability', 'business', 'innovation', 'future', 'green'],
+                    ['remotework', 'culture', 'professional', 'success', 'worklife'],
+                    ['trends', 'business', 'industry', 'analysis', 'strategy']
+                ];
+
+                const randomIndex = Math.floor(Math.random() * topics.length);
+                
+                return {
+                    text: topics[randomIndex],
+                    hashtags: hashtags[randomIndex]
+                };
+            }
+
+            async extractFromURL() {
+                const url = document.getElementById('source-url').value;
+                if (!url) return;
+
+                const extractBtn = document.getElementById('extract-content');
+                extractBtn.textContent = 'Extracting...';
+                extractBtn.disabled = true;
+
+                try {
+                    // Simulate URL extraction
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    
+                    const extractedDiv = document.getElementById('extracted-content');
+                    extractedDiv.classList.remove('hidden');
+                    
+                    const preview = extractedDiv.querySelector('.content-preview');
+                    preview.innerHTML = `
+                        <h5>Sample Article Title</h5>
+                        <p>This is a simulated extraction of content from the provided URL. In a real implementation, this would parse the webpage content and extract the main text, title, and relevant metadata.</p>
+                        <p>The extracted content would then be used as the base for content generation across your selected platforms.</p>
+                    `;
+                    
+                    this.generationData.extractedContent = true;
+                    this.updateNavigationState();
+                    
+                } catch (error) {
+                    console.error('Extraction failed:', error);
+                } finally {
+                    extractBtn.textContent = 'Extract';
+                    extractBtn.disabled = false;
+                }
+            }
+
+            loadExistingTemplates() {
+                const templateSelector = document.getElementById('template-selector');
+                
+                // Load from localStorage or show placeholder
+                try {
+                    const saved = localStorage.getItem('3c-templates');
+                    if (saved) {
+                        const templates = JSON.parse(saved);
+                        this.renderTemplateSelector(templates);
+                    } else {
+                        templateSelector.innerHTML = `
+                            <div class="no-templates">
+                                <p>No saved templates found.</p>
+                                <a href="index.html" class="btn btn-outline">Create Template First</a>
+                            </div>
+                        `;
+                    }
+                } catch (error) {
+                    console.error('Error loading templates:', error);
+                }
+            }
+
+            renderTemplateSelector(templates) {
+                const selector = document.getElementById('template-selector');
+                selector.innerHTML = '';
+                
+                Object.entries(templates).forEach(([id, template]) => {
+                    const templateCard = document.createElement('div');
+                    templateCard.className = 'template-selector-card';
+                    templateCard.innerHTML = `
+                        <div class="template-selector-info">
+                            <h4>${template.name}</h4>
+                            <p>Platform: ${template.platform} | Created: ${new Date(template.created).toLocaleDateString()}</p>
+                        </div>
+                        <button class="btn btn-outline" onclick="this.selectTemplate('${id}')">Select</button>
+                    `;
+                    selector.appendChild(templateCard);
+                });
+            }
+
+            selectTemplate(templateId) {
+                this.generationData.selectedTemplate = templateId;
+                
+                // Highlight selected template
+                document.querySelectorAll('.template-selector-card').forEach(card => {
+                    card.classList.remove('selected');
+                });
+                event.target.closest('.template-selector-card').classList.add('selected');
+                
+                this.updateNavigationState();
+            }
+
+            // Result interaction methods
+            viewResultDetail(platform, variation) {
+                const modal = document.getElementById('result-detail-modal');
+                const mockContent = this.generateMockContent(platform);
+                
+                document.getElementById('detail-platform').textContent = platform.charAt(0).toUpperCase() + platform.slice(1);
+                document.getElementById('detail-content').textContent = mockContent.text;
+                
+                const hashtagsContainer = document.getElementById('detail-hashtags');
+                hashtagsContainer.innerHTML = mockContent.hashtags.map(tag => 
+                    `<span class="hashtag-tag">#${tag}</span>`
+                ).join('');
+                
+                const metricsContainer = document.getElementById('detail-metrics');
+                metricsContainer.innerHTML = `
+                    <div class="metric-item">
+                        <span class="metric-label">Character Count:</span>
+                        <span class="metric-value">${mockContent.text.length}</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Hashtag Count:</span>
+                        <span class="metric-value">${mockContent.hashtags.length}</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Readability Score:</span>
+                        <span class="metric-value">${Math.floor(Math.random() * 20) + 80}%</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">SEO Score:</span>
+                        <span class="metric-value">${Math.floor(Math.random() * 15) + 85}%</span>
+                    </div>
+                `;
+                
+                modal.style.display = 'flex';
+            }
+
+            copyResult(platform, variation) {
+                const mockContent = this.generateMockContent(platform);
+                const fullContent = `${mockContent.text}\n\n${mockContent.hashtags.map(tag => `#${tag}`).join(' ')}`;
+                
+                navigator.clipboard.writeText(fullContent).then(() => {
+                    this.showNotification('Content copied to clipboard!', 'success');
+                });
+            }
+
+            editResult(platform, variation) {
+                // Redirect to main builder with the generated content
+                const mockContent = this.generateMockContent(platform);
+                localStorage.setItem('3c-edit-content', JSON.stringify({
+                    platform: platform,
+                    content: mockContent.text,
+                    hashtags: mockContent.hashtags
+                }));
+                window.location.href = 'index.html?edit=true';
+            }
+
+            regenerateResult(platform, variation) {
+                const card = event.target.closest('.result-card');
+                card.classList.add('loading');
+                
+                setTimeout(() => {
+                    const mockContent = this.generateMockContent(platform);
+                    const preview = card.querySelector('.content-preview');
+                    const hashtagsPreview = card.querySelector('.hashtags-preview');
+                    
+                    preview.textContent = mockContent.text.substring(0, 150) + '...';
+                    hashtagsPreview.innerHTML = mockContent.hashtags.slice(0, 3).map(tag => 
+                        `<span class="hashtag">#${tag}</span>`
+                    ).join('');
+                    
+                    card.classList.remove('loading');
+                    this.showNotification('Content regenerated!', 'success');
+                }, 1000);
+            }
+
+            showNotification(message, type = 'info') {
+                const notification = document.createElement('div');
+                notification.className = `notification notification-${type}`;
+                notification.textContent = message;
+                
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.remove();
+                    }
+                }, 3000);
+            }
+        }
+
+        // Initialize generator when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            window.contentGenerator = new ContentGenerator();
+        });
+
+        // Make methods available globally for onclick handlers
+        window.viewResultDetail = (platform, variation) => window.contentGenerator.viewResultDetail(platform, variation);
+        window.copyResult = (platform, variation) => window.contentGenerator.copyResult(platform, variation);
+        window.editResult = (platform, variation) => window.contentGenerator.editResult(platform, variation);
+        window.regenerateResult = (platform, variation) => window.contentGenerator.regenerateResult(platform, variation);
+        window.selectTemplate = (templateId) => window.contentGenerator.selectTemplate(templateId);
+    </script>
+
+    <style>
+        /* Generator-specific styles */
+        .wizard-container {
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--gray-200);
+            overflow: hidden;
+            margin-top: var(--space-8);
+        }
+
+        .wizard-steps {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-6);
+            background: var(--gray-50);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-2);
+            opacity: 0.5;
+            transition: var(--transition);
+        }
+
+        .step.active {
+            opacity: 1;
+        }
+
+        .step.completed {
+            opacity: 0.8;
+        }
+
+        .step.completed .step-number {
+            background: var(--success-500);
+            color: white;
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--gray-300);
+            color: var(--gray-600);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .step.active .step-number {
+            background: var(--primary-600);
+            color: white;
+        }
+
+        .step-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .step-connector {
+            width: 80px;
+            height: 2px;
+            background: var(--gray-300);
+            margin: 0 var(--space-4);
+        }
+
+        .wizard-step {
+            display: none;
+            padding: var(--space-8);
+            min-height: 500px;
+        }
+
+        .wizard-step.active {
+            display: block;
+        }
+
+        .step-content h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: var(--space-6);
+            text-align: center;
+        }
+
+        .input-methods {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+
+        .input-method {
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .input-method:hover {
+            border-color: var(--primary-300);
+            transform: translateY(-2px);
+        }
+
+        .input-method.active {
+            border-color: var(--primary-500);
+            background: var(--primary-50);
+        }
+
+        .method-icon {
+            font-size: 2rem;
+            margin-bottom: var(--space-3);
+        }
+
+        .input-method h4 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: var(--space-2);
+            color: var(--gray-900);
+        }
+
+        .input-method p {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            margin: 0;
+        }
+
+        .input-area {
+            margin-top: var(--space-6);
+        }
+
+        .input-area label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: var(--space-2);
+            color: var(--gray-700);
+        }
+
+        .input-area textarea,
+        .input-area input {
+            width: 100%;
+            padding: var(--space-3);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            font-family: var(--font-sans);
+            font-size: 0.875rem;
+            transition: var(--transition);
+        }
+
+        .input-area textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .input-tips {
+            margin-top: var(--space-2);
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            background: var(--primary-50);
+            padding: var(--space-2);
+            border-radius: var(--radius-sm);
+        }
+
+        .platform-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+
+        .platform-card {
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .platform-card:hover {
+            border-color: var(--primary-300);
+            transform: translateY(-2px);
+        }
+
+        .platform-card.selected {
+            border-color: var(--primary-500);
+            background: var(--primary-50);
+        }
+
+        .platform-icon {
+            font-size: 2rem;
+            margin-bottom: var(--space-2);
+        }
+
+        .platform-card h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: var(--space-2);
+            color: var(--gray-900);
+        }
+
+        .platform-features {
+            display: flex;
+            gap: var(--space-1);
+            justify-content: center;
+            margin-bottom: var(--space-2);
+        }
+
+        .feature-tag {
+            font-size: 0.625rem;
+            background: var(--gray-100);
+            color: var(--gray-600);
+            padding: var(--space-1);
+            border-radius: var(--radius-sm);
+        }
+
+        .platform-limits {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--space-6);
+        }
+
+        .settings-group {
+            background: var(--gray-50);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+        }
+
+        .settings-group h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: var(--space-4);
+            color: var(--gray-900);
+        }
+
+        .setting-item {
+            margin-bottom: var(--space-3);
+        }
+
+        .setting-item label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: var(--space-1);
+            color: var(--gray-700);
+        }
+
+        .setting-item select,
+        .setting-item input {
+            width: 100%;
+            padding: var(--space-2);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+        }
+
+        .length-options {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+        }
+
+        .radio-option {
+            display: flex !important;
+            align-items: center;
+            gap: var(--space-2);
+            cursor: pointer;
+        }
+
+        .generation-summary {
+            background: var(--gray-50);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            margin-bottom: var(--space-6);
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-4);
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .summary-item .label {
+            font-weight: 500;
+            color: var(--gray-600);
+        }
+
+        .summary-item .value {
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .generation-actions {
+            text-align: center;
+            margin-bottom: var(--space-6);
+        }
+
+        .btn-large {
+            padding: var(--space-4) var(--space-8);
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .generation-progress {
+            background: var(--gray-50);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            margin-bottom: var(--space-6);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-4);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--gray-200);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            margin-bottom: var(--space-6);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary-500);
+            transition: width 0.3s ease;
+        }
+
+        .progress-steps {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--space-4);
+        }
+
+        .progress-step-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-2);
+            opacity: 0.5;
+            transition: var(--transition);
+        }
+
+        .progress-step-item.active {
+            opacity: 1;
+        }
+
+        .progress-step-item .step-icon {
+            font-size: 1.5rem;
+        }
+
+        .progress-step-item .step-text {
+            font-size: 0.75rem;
+            text-align: center;
+            color: var(--gray-600);
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: var(--space-4);
+        }
+
+        .result-card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .result-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-4);
+            background: var(--gray-50);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .platform-info {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .platform-name {
+            font-weight: 500;
+            text-transform: capitalize;
+        }
+
+        .variation-badge {
+            background: var(--primary-100);
+            color: var(--primary-700);
+            padding: var(--space-1) var(--space-2);
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .result-content {
+            padding: var(--space-4);
+        }
+
+        .content-preview {
+            font-size: 0.875rem;
+            line-height: 1.5;
+            color: var(--gray-800);
+            margin-bottom: var(--space-3);
+        }
+
+        .hashtags-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-1);
+        }
+
+        .hashtag {
+            font-size: 0.75rem;
+            color: var(--primary-600);
+            background: var(--primary-50);
+            padding: var(--space-1);
+            border-radius: var(--radius-sm);
+        }
+
+        .result-metrics {
+            display: flex;
+            justify-content: space-between;
+            padding: var(--space-3) var(--space-4);
+            background: var(--gray-50);
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .metric {
+            text-align: center;
+        }
+
+        .metric-label {
+            display: block;
+            font-size: 0.625rem;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .metric-value {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .result-actions {
+            display: flex;
+            justify-content: center;
+            gap: var(--space-2);
+            padding: var(--space-3);
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .wizard-navigation {
+            display: flex;
+            justify-content: space-between;
+            padding: var(--space-6);
+            border-top: 1px solid var(--gray-200);
+            background: var(--gray-50);
+        }
+
+        .template-selector {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .template-selector-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-4);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            background: var(--gray-50);
+            transition: var(--transition);
+        }
+
+        .template-selector-card:hover {
+            border-color: var(--primary-300);
+        }
+
+        .template-selector-card.selected {
+            border-color: var(--primary-500);
+            background: var(--primary-50);
+        }
+
+        .url-input-group {
+            display: flex;
+            gap: var(--space-2);
+        }
+
+        .url-input-group input {
+            flex: 1;
+        }
+
+        .extracted-content {
+            margin-top: var(--space-4);
+            padding: var(--space-4);
+            background: var(--gray-50);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--gray-200);
+        }
+
+        .question-group {
+            margin-bottom: var(--space-4);
+        }
+
+        .question-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: var(--space-2);
+            color: var(--gray-700);
+        }
+
+        .no-templates {
+            text-align: center;
+            padding: var(--space-8);
+            color: var(--gray-500);
+        }
+
+        .result-card.loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .result-card.loading::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+            animation: loading 1.5s infinite;
+        }
+
+        @media (max-width: 768px) {
+            .wizard-steps {
+                overflow-x: auto;
+                padding: var(--space-4);
+            }
+            
+            .step-connector {
+                width: 40px;
+                margin: 0 var(--space-2);
+            }
+            
+            .input-methods {
+                grid-template-columns: 1fr;
+            }
+            
+            .platform-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+            
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</body>
+</html>
