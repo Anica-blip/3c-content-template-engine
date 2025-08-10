@@ -13,6 +13,7 @@ class ContentTemplateEngine {
             'aurion': 'Strategic, insightful, and thought-provoking', 
             'caelum': 'Creative, inspiring, and authentically engaging'
         };
+        this.dashboardUrl = 'https://threadcommand.center/dashboard/settings'; // Configurable dashboard URL
         this.init();
     }
 
@@ -121,10 +122,10 @@ class ContentTemplateEngine {
         if (createBtn) createBtn.addEventListener('click', () => this.createNewTemplate());
 
         // Label and audience management
-        const manageLabelsBt = document.getElementById('manage-labels');
+        const manageLabelsBtn = document.getElementById('manage-labels');
         const manageAudiencesBtn = document.getElementById('manage-audiences');
 
-        if (manageLabelsBt) manageLabelsBt.addEventListener('click', () => this.showLabelsManager());
+        if (manageLabelsBtn) manageLabelsBtn.addEventListener('click', () => this.showLabelsManager());
         if (manageAudiencesBtn) manageAudiencesBtn.addEventListener('click', () => this.showAudienceManager());
 
         // Content input listeners
@@ -199,6 +200,18 @@ class ContentTemplateEngine {
                 document.getElementById('platform-selector').value = platform;
             });
         });
+
+        // Manage Labels button
+        const manageLabelsBtn = document.getElementById('manage-labels');
+        if (manageLabelsBtn) {
+            manageLabelsBtn.addEventListener('click', () => this.showLabelsManager());
+        }
+
+        // Manage Audiences button  
+        const manageAudiencesBtn = document.getElementById('manage-audiences');
+        if (manageAudiencesBtn) {
+            manageAudiencesBtn.addEventListener('click', () => this.showAudienceManager());
+        }
     }
 
     renderPlatformSelector() {
@@ -283,11 +296,13 @@ class ContentTemplateEngine {
                         <div class="meta-field">
                             <label>Media Type:</label>
                             <select class="template-field" data-field="media_type">
-                                <option value="text">Text Only</option>
+                                <option value="all_types">All Types</option>
                                 <option value="image">Image</option>
                                 <option value="video">Video</option>
-                                <option value="carousel">Carousel</option>
-                                <option value="story">Story</option>
+                                <option value="gif">GIF</option>
+                                <option value="pdf_document">PDF Document</option>
+                                <option value="interactive_post">Interactive Post</option>
+                                <option value="other">Other</option>
                             </select>
                         </div>
                         
@@ -315,6 +330,7 @@ class ContentTemplateEngine {
                 <button type="button" id="preview-template" class="btn btn-outline">Preview</button>
                 <button type="button" id="save-current-template" class="btn btn-primary">Save Template</button>
                 <button type="button" id="generate-final-content" class="btn btn-success">Generate Content</button>
+                <button type="button" id="forward-to-dashboard" class="btn btn-info">Forward to Dashboard</button>
             </div>
         `;
     }
@@ -444,10 +460,12 @@ class ContentTemplateEngine {
         const saveBtn = document.getElementById('save-current-template');
         const previewBtn = document.getElementById('preview-template');
         const generateBtn = document.getElementById('generate-final-content');
+        const forwardBtn = document.getElementById('forward-to-dashboard');
 
         if (saveBtn) saveBtn.addEventListener('click', () => this.saveCurrentTemplate());
         if (previewBtn) previewBtn.addEventListener('click', () => this.showPreviewModal());
         if (generateBtn) generateBtn.addEventListener('click', () => this.generateContent());
+        if (forwardBtn) forwardBtn.addEventListener('click', () => this.forwardToDashboard());
 
         // Hashtag suggestions
         const suggestBtn = document.getElementById('hashtag-suggestions');
@@ -568,6 +586,78 @@ class ContentTemplateEngine {
         document.querySelector('.modal').remove();
         this.showAudienceManager();
         this.showSuccess('Audience removed successfully');
+    }
+
+    forwardToDashboard() {
+        const templateData = this.collectTemplateData();
+        
+        if (!templateData || !this.currentPlatform) {
+            this.showError('Please complete the template form before forwarding');
+            return;
+        }
+
+        // Validate required fields
+        if (!templateData.meta.theme || !templateData.meta.sender) {
+            this.showError('Theme and Sender are required fields');
+            return;
+        }
+
+        // Show forward options modal
+        const modal = this.createModal('Forward to Dashboard', `
+            <div class="forward-options">
+                <h4>Select Team Member Dashboard:</h4>
+                <div class="team-members">
+                    <button onclick="templateEngine.forwardToMember('anica')" class="btn btn-primary member-btn">
+                        Forward to Anica
+                    </button>
+                    <button onclick="templateEngine.forwardToMember('caelum')" class="btn btn-primary member-btn">
+                        Forward to Caelum  
+                    </button>
+                    <button onclick="templateEngine.forwardToMember('aurion')" class="btn btn-primary member-btn">
+                        Forward to Aurion
+                    </button>
+                </div>
+                <div class="template-summary">
+                    <h5>Template Summary:</h5>
+                    <p><strong>Platform:</strong> ${this.platforms[templateData.platform].name}</p>
+                    <p><strong>Theme:</strong> ${this.formatFieldName(templateData.meta.theme)}</p>
+                    <p><strong>Sender:</strong> ${this.formatFieldName(templateData.meta.sender)}</p>
+                    <p><strong>Media Type:</strong> ${this.formatFieldName(templateData.meta.media_type)}</p>
+                </div>
+            </div>
+        `);
+        
+        document.body.appendChild(modal);
+    }
+
+    forwardToMember(member) {
+        const templateData = this.collectTemplateData();
+        
+        // Save template data with member assignment
+        templateData.assignedTo = member;
+        templateData.forwardedAt = new Date().toISOString();
+        
+        // Store for dashboard pickup
+        const forwardedTemplates = this.getForwardedTemplates();
+        const forwardId = 'forward_' + Date.now();
+        forwardedTemplates[forwardId] = templateData;
+        localStorage.setItem('3c-forwarded-templates', JSON.stringify(forwardedTemplates));
+        
+        // Open dashboard in new tab
+        window.open(`${this.dashboardUrl}?member=${member}&template=${forwardId}`, '_blank');
+        
+        // Close modal and show success
+        document.querySelector('.modal').remove();
+        this.showSuccess(`Template forwarded to ${this.formatFieldName(member)}'s dashboard`);
+    }
+
+    getForwardedTemplates() {
+        try {
+            const stored = localStorage.getItem('3c-forwarded-templates');
+            return stored ? JSON.parse(stored) : {};
+        } catch {
+            return {};
+        }
     }
 
     createModal(title, content) {
@@ -853,7 +943,7 @@ class ContentTemplateEngine {
                 <div class="preview-meta">
                     <span class="meta-tag">Theme: ${this.formatFieldName(data.meta.theme || 'None')}</span>
                     <span class="meta-tag">From: ${this.formatFieldName(data.meta.sender || 'None')}</span>
-                    <span class="meta-tag">Type: ${this.formatFieldName(data.meta.media_type || 'text')}</span>
+                    <span class="meta-tag">Type: ${this.formatFieldName(data.meta.media_type || 'all_types')}</span>
                 </div>
             </div>
 
