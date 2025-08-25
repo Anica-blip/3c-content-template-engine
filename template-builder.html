@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3C Content Template Engine</title>
+    <style>
+        /* Enhanced CSS for dropdown-based system */
+        :root {
+            --primary-600: #0284c7;
+            --primary-100: #e0f2fe;
+            --primary-50: #f0f9ff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-900: #0f172a;
+            --success-500: #10b981;
+            --success-100: #f0fdf4;
+            --warning-500: #f59e0b;
+            --error-500: #ef4444;
+            --space-2: 0.5rem;
+            --space-3: 0.75rem;
+            --space-4: 1rem;
+            --space-6: 1.5rem;
+            --space-8: 2rem;
+            --radius-lg: 0.75rem;
+            --radius-md: 0.5rem;
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: Inter, -apple-system, sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-900);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 var(--space-6);
+        }
+
+        .app-header {
+            background: linear-gradient(135deg, var(--primary-600) 0%, #0369a1 100%);
+            color: white;
+            padding: var(--space-4) 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .app-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+
+        .app-subtitle {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: var(--space-8) 0;
+        }
+
+        .template-builder {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--gray-200);
+            overflow: hidden;
+        }
+
+        .builder-header {
+            background: var(--gray-100);
+            padding: var(--space-6);
+            border-bottom: 1px solid var(--gray-200);
+            text-align: center;
+        }
+
+        .builder-header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: var(--space-2);
+        }
+
+        .builder-body {
+            padding: var(--space-8);
+        }
+
+        /* Selection Phase */
+        .selection-phase {
+            display: block;
+        }
+
+        .selection-phase.hidden {
+            display: none;
+        }
+
+        .choice-section {
+            margin-bottom: var(--space-6);
+            padding: var(--space-6);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            background: var(--gray-50);
+        }
+
+        .section-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: var(--space-4);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .required-mark {
+            color: var(--error-500);
+            font-weight: 700;
+        }
+
+        .choice-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: var(--space-4);
+        }
+
+        .choice-field {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+        }
+
+        .field-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .field-select {
+            padding: var(--space-3);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            background: white;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .field-select:focus {
+            outline: none;
+            border-color: var(--primary-600);
+            box-shadow: 0 0 0 3px var(--primary-100);
+        }
+
+        .field-select.completed {
+            border-color: var(--success-500);
+            background: var(--success-100);
+        }
+
+        .template-id-display {
+            background: var(--gray-900);
+            color: white;
+            padding: var(--space-6);
+            border-radius: var(--radius-lg);
+            margin: var(--space-6) 0;
+            text-align: center;
+        }
+
+        .template-id-label {
+            font-size: 0.875rem;
+            opacity: 0.8;
+            margin-bottom: var(--space-2);
+        }
+
+        .template-id-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: monospace;
+            letter-spacing: 2px;
+            color: #00ff88;
+        }
+
+        .template-id-breakdown {
+            font-size: 0.75rem;
+            opacity: 0.6;
+            margin-top: var(--space-2);
+        }
+
+        /* Template Creation Phase */
+        .creation-phase {
+            display: none;
+        }
+
+        .creation-phase.visible {
+            display: block;
+        }
+
+        .platform-info {
+            background: var(--primary-50);
+            border: 1px solid var(--primary-200);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+
+        .platform-specs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-3);
+            margin-top: var(--space-3);
+        }
+
+        .spec-item {
+            background: white;
+            padding: var(--space-3);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--primary-200);
+        }
+
+        .spec-label {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .spec-value {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .content-fields {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--space-6);
+        }
+
+        .content-field {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+        }
+
+        .content-field.hidden {
+            display: none;
+        }
+
+        .field-input {
+            padding: var(--space-3);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+            resize: vertical;
+        }
+
+        .field-input:focus {
+            outline: none;
+            border-color: var(--primary-600);
+            box-shadow: 0 0 0 3px var(--primary-100);
+        }
+
+        .field-textarea {
+            min-height: 120px;
+            max-height: 300px;
+        }
+
+        .char-counter {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        .char-counter.warning {
+            color: var(--warning-500);
+            font-weight: 500;
+        }
+
+        .char-counter.error {
+            color: var(--error-500);
+            font-weight: 600;
+        }
+
+        .field-tips {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            font-style: italic;
+        }
+
+        .hashtag-section {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            padding: var(--space-4);
+        }
+
+        .hashtag-input-row {
+            display: flex;
+            gap: var(--space-2);
+            margin-bottom: var(--space-3);
+        }
+
+        .hashtag-input {
+            flex: 1;
+            padding: var(--space-2);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+        }
+
+        .hashtag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-2);
+            margin-bottom: var(--space-3);
+            min-height: 40px;
+            padding: var(--space-2);
+            border: 1px dashed var(--gray-300);
+            border-radius: var(--radius-md);
+        }
+
+        .hashtag-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-1);
+            background: var(--primary-100);
+            color: var(--primary-800);
+            padding: var(--space-1) var(--space-2);
+            border-radius: var(--radius-md);
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .remove-hashtag {
+            background: none;
+            border: none;
+            color: var(--primary-600);
+            cursor: pointer;
+            font-weight: bold;
+            padding: 0;
+            margin-left: var(--space-1);
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: var(--space-4);
+            margin-top: var(--space-8);
+            padding-top: var(--space-6);
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .btn {
+            padding: var(--space-3) var(--space-6);
+            border-radius: var(--radius-lg);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: var(--primary-600);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success-500);
+            color: white;
+        }
+
+        .btn-outline {
+            background: white;
+            color: var(--gray-700);
+            border: 1px solid var(--gray-300);
+        }
+
+        .btn-secondary {
+            background: var(--gray-600);
+            color: white;
+        }
+
+        .progress-steps {
+            display: flex;
+            justify-content: center;
+            gap: var(--space-8);
+            margin-bottom: var(--space-6);
+            padding: var(--space-4);
+            background: var(--gray-100);
+            border-radius: var(--radius-lg);
+        }
+
+        .step-indicator {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-1);
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        .step-indicator.active {
+            color: var(--primary-600);
+            font-weight: 600;
+        }
+
+        .step-indicator.completed {
+            color: var(--success-500);
+        }
+
+        .step-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--gray-300);
+            color: var(--gray-600);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .step-indicator.active .step-number {
+            background: var(--primary-600);
+            color: white;
+        }
+
+        .step-indicator.completed .step-number {
+            background: var(--success-500);
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .choice-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .progress-steps {
+                gap: var(--space-4);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="app-header">
+        <div class="container">
+            <div class="header-content">
+                <div>
+                    <h1 class="app-title">3C Content Template Engine</h1>
+                    <span class="app-subtitle">Create • Customize • Convert</span>
+                </div>
+                <div>
+                    <button class="btn btn-outline" onclick="resetBuilder()">Reset</button>
+                    <button class="btn btn-outline" onclick="loadTemplate()">Load Template</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <div class="template-builder">
+                <div class="builder-header">
+                    <h1>Content Template Builder Workflow</h1>
+                    <p>Create platform-optimized content templates with intelligent suggestions and real-time validation.</p>
+                </div>
+
+                <div class="builder-body">
+                    <!-- Progress Indicator -->
+                    <div class="progress-steps">
+                        <div class="step-indicator active" id="step-select">
+                            <div class="step-number">1</div>
+                            <span>Select</span>
+                        </div>
+                        <div class="step-indicator" id="step-create">
+                            <div class="step-number">2</div>
+                            <span>Create</span>
+                        </div>
+                        <div class="step-indicator" id="step-review">
+                            <div class="step-number">3</div>
+                            <span>Review</span>
+                        </div>
+                    </div>
+
+                    <!-- Selection Phase -->
+                    <div class="selection-phase" id="selection-phase">
+                        <!-- Core Template Settings -->
+                        <div class="choice-section">
+                            <div class="section-title">
+                                <span>Core Template Settings</span>
+                                <span class="required-mark">*</span>
+                            </div>
+                            
+                            <div class="choice-grid">
+                                <div class="choice-field">
+                                    <label class="field-label">Theme/Label *</label>
+                                    <select class="field-select" id="theme-select" data-field="theme">
+                                        <option value="">Select Theme/Label...</option>
+                                        <option value="news_alert" data-code="NA">News Alert</option>
+                                        <option value="promotion" data-code="PR">Promotion</option>
+                                        <option value="standard_post" data-code="SP">Standard Post</option>
+                                        <option value="cta_quiz" data-code="QZ">CTA - Quiz</option>
+                                        <option value="cta_game" data-code="GA">CTA - Game</option>
+                                        <option value="cta_puzzle" data-code="PZ">CTA - Puzzle</option>
+                                        <option value="cta_challenge" data-code="CH">CTA - Challenge</option>
+                                        <option value="news" data-code="NS">News</option>
+                                        <option value="blog" data-code="BP">Blog</option>
+                                        <option value="tutorial_guide" data-code="TG">Tutorial Guide</option>
+                                        <option value="course_tool" data-code="CT">Course, Tool</option>
+                                        <option value="assessment" data-code="AS">Assessment</option>
+                                    </select>
+                                </div>
+
+                                <div class="choice-field">
+                                    <label class="field-label">Character Profile</label>
+                                    <select class="field-select" id="character-select" data-field="character">
+                                        <option value="">Select Character...</option>
+                                        <option value="anica">Anica</option>
+                                        <option value="caelum">Caelum</option>
+                                        <option value="aurion">Aurion</option>
+                                    </select>
+                                </div>
+
+                                <div class="choice-field">
+                                    <label class="field-label">Brand Voice Style</label>
+                                    <select class="field-select" id="voice-select" data-field="voice">
+                                        <option value="">Select Voice Style...</option>
+                                        <option value="casual">Casual</option>
+                                        <option value="friendly">Friendly</option>
+                                        <option value="professional">Professional</option>
+                                        <option value="creative">Creative</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Audience & Media Settings -->
+                        <div class="choice-section">
+                            <div class="section-title">
+                                <span>Audience & Media Settings</span>
+                                <span class="required-mark">*</span>
+                            </div>
+                            
+                            <div class="choice-grid">
+                                <div class="choice-field">
+                                    <label class="field-label">Target Audience *</label>
+                                    <select class="field-select" id="audience-select" data-field="audience">
+                                        <option value="">Select Audience...</option>
+                                        <option value="existing_members" data-code="EM">Existing Members</option>
+                                        <option value="new_members" data-code="NM">New Members</option>
+                                        <option value="persona_falcon" data-code="FL">Persona FALCON</option>
+                                        <option value="persona_panther" data-code="PA">Persona PANTHER</option>
+                                        <option value="persona_wolf" data-code="WF">Persona WOLF</option>
+                                        <option value="persona_lion" data-code="LI">Persona LION</option>
+                                        <option value="general_public" data-code="GP">General Public</option>
+                                    </select>
+                                </div>
+
+                                <div class="choice-field">
+                                    <label class="field-label">Media Type *</label>
+                                    <select class="field-select" id="media-select" data-field="media">
+                                        <option value="">Select Media Type...</option>
+                                        <option value="image" data-code="IM">Image</option>
+                                        <option value="video" data-code="VD">Video</option>
+                                        <option value="gifs" data-code="GF">GIFs</option>
+                                        <option value="pdf" data-code="PF">PDF</option>
+                                        <option value="interactive_media" data-code="IM">Interactive Media</option>
+                                        <option value="url_link" data-code="UL">URL Link</option>
+                                    </select>
+                                </div>
+
+                                <div class="choice-field">
+                                    <label class="field-label">Template Type *</label>
+                                    <select class="field-select" id="template-type-select" data-field="template_type">
+                                        <option value="">Select Template Type...</option>
+                                        <option value="social_media" data-code="SM">Social Media</option>
+                                        <option value="presentation" data-code="PR">Presentation</option>
+                                        <option value="video_message" data-code="VM">Video Message</option>
+                                        <option value="anica_chat" data-code="AC">Anica Chat</option>
+                                        <option value="blog_posts" data-code="BP">Blog Posts</option>
+                                        <option value="news_article" data-code="NA">News Article</option>
+                                        <option value="newsletter" data-code="NL">Newsletter</option>
+                                        <option value="email_templates" data-code="ET">Email Templates</option>
+                                        <option value="custom_templates" data-code="CT">Custom Templates</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Platform Selection (Optional) -->
+                        <div class="choice-section">
+                            <div class="section-title">
+                                <span>Platform Selection</span>
+                                <span style="color: var(--gray-500); font-weight: 400; font-size: 0.875rem;">(Required only for "Forward to Dashboard")</span>
+                            </div>
+                            
+                            <div class="choice-grid">
+                                <div class="choice-field">
+                                    <label class="field-label">Select Platform</label>
+                                    <select class="field-select" id="platform-select" data-field="platform">
+                                        <option value="">Select Platform...</option>
+                                        <option value="instagram" data-code="IS">Instagram - Feed Post/Story +2</option>
+                                        <option value="facebook" data-code="FB">Facebook - Post/Story +2</option>
+                                        <option value="linkedin" data-code="LK">LinkedIn - Post/Article +2</option>
+                                        <option value="twitter" data-code="TX">Twitter/X - Tweet: 280 chars</option>
+                                        <option value="youtube" data-code="YT">YouTube - Title: 100 chars</option>
+                                        <option value="tiktok" data-code="TK">TikTok - Caption: 2200 chars</option>
+                                        <option value="telegram" data-code="TG">Telegram - Message: 4096 chars</option>
+                                        <option value="pinterest" data-code="PI">Pinterest - Title: 100 chars</option>
+                                        <option value="whatsapp" data-code="WB">WhatsApp Business - Status: 700 chars</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Template ID Display -->
+                        <div class="template-id-display">
+                            <div class="template-id-label">Auto-Generated Template ID</div>
+                            <div class="template-id-value" id="template-id-display">XX-XX-XX-XX-XXX</div>
+                            <div class="template-id-breakdown" id="template-id-breakdown">
+                                Theme - Audience - Media - Template - Auto Number
+                            </div>
+                        </div>
+
+                        <!-- Selection Actions -->
+                        <div class="action-buttons">
+                            <button class="btn btn-outline" onclick="searchTemplate()" id="search-btn" disabled>Search Template</button>
+                            <button class="btn btn-primary" onclick="proceedToCreation()" id="proceed-btn" disabled>Create Template</button>
+                        </div>
+                    </div>
+
+                    <!-- Template Creation Phase -->
+                    <div class="creation-phase" id="creation-phase">
+                        <!-- Platform Information -->
+                        <div class="platform-info" id="platform-info">
+                            <h3 id="platform-title">Template Creation</h3>
+                            <p id="platform-description">Fill in the content fields based on your selections</p>
+                            <div class="platform-specs" id="platform-specs">
+                                <!-- Platform specifications will be populated here -->
+                            </div>
+                        </div>
+
+                        <!-- Content Fields -->
+                        <div class="content-fields" id="content-fields">
+                            <!-- Title Field -->
+                            <div class="content-field" id="title-field">
+                                <label class="field-label">Title/Headline</label>
+                                <input type="text" class="field-input" id="title-input" placeholder="Enter compelling title...">
+                                <div class="char-counter">
+                                    <span class="field-tips">Create an attention-grabbing headline</span>
+                                    <span id="title-counter">0/100</span>
+                                </div>
+                            </div>
+
+                            <!-- Description Field -->
+                            <div class="content-field" id="description-field">
+                                <label class="field-label">Description/Content</label>
+                                <textarea class="field-input field-textarea" id="description-input" placeholder="Enter your content description..."></textarea>
+                                <div class="char-counter">
+                                    <span class="field-tips">Provide engaging content that matches your theme and brand voice</span>
+                                    <span id="description-counter">0/2200</span>
+                                </div>
+                            </div>
+
+                            <!-- Hashtags Section -->
+                            <div class="content-field" id="hashtags-field">
+                                <label class="field-label">Hashtags</label>
+                                <div class="hashtag-section">
+                                    <div class="hashtag-input-row">
+                                        <input type="text" class="hashtag-input" id="hashtag-input" placeholder="Add hashtags (press Enter or comma to add)">
+                                        <button type="button" class="btn btn-outline" onclick="addHashtag()">Add</button>
+                                    </div>
+                                    <div class="hashtag-list" id="hashtag-list">
+                                        <!-- Hashtags will be added here -->
+                                    </div>
+                                    <div class="char-counter">
+                                        <span class="field-tips">Use relevant hashtags to increase discoverability</span>
+                                        <span id="hashtag-counter">0/30</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Keywords Field -->
+                            <div class="content-field hidden" id="keywords-field">
+                                <label class="field-label">SEO Keywords</label>
+                                <input type="text" class="field-input" id="keywords-input" placeholder="Enter relevant keywords...">
+                                <div class="char-counter">
+                                    <span class="field-tips">Add SEO keywords for better reach</span>
+                                    <span>Optional field</span>
+                                </div>
+                            </div>
+
+                            <!-- Credits Field -->
+                            <div class="content-field hidden" id="credits-field">
+                                <label class="field-label">Credits/Sources</label>
+                                <input type="text" class="field-input" id="credits-input" placeholder="Credit sources, collaborators, or inspirations...">
+                                <div class="char-counter">
+                                    <span class="field-tips">Credit any sources, collaborators, or inspirations</span>
+                                    <span>Optional field</span>
+                                </div>
+                            </div>
+
+                            <!-- Call to Action Field -->
+                            <div class="content-field" id="cta-field">
+                                <label class="field-label">Call to Action</label>
+                                <input type="text" class="field-input" id="cta-input" placeholder="What action should users take?">
+                                <div class="char-counter">
+                                    <span class="field-tips">Clear action you want your audience to take</span>
+                                    <span id="cta-counter">0/100</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Creation Actions -->
+                        <div class="action-buttons">
+                            <button class="btn btn-outline" onclick="backToSelection()">← Back to Selection</button>
+                            <button class="btn btn-outline" onclick="previewTemplate()">Preview Template</button>
+                            <button class="btn btn-secondary" onclick="saveTemplate()">Save Template</button>
+                            <button class="btn btn-success" onclick="forwardToDashboard()" id="forward-btn" disabled>Forward to Dashboard</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Enhanced Template Builder with Platform-Specific Logic
+        class TemplateBuilder {
+            constructor() {
+                this.selections = {
+                    theme: null,
+                    character: null,
+                    voice: null,
+                    audience: null,
+                    media: null,
+                    template_type: null,
+                    platform: null
+                };
+                this.templateId = 'XX-XX-XX-XX-XXX';
+                this.currentPhase = 'selection';
+                this.hashtags = [];
+                this.init();
+            }
+
+            init() {
+                this.attachEventListeners();
+                this.updateTemplateId();
+                this.updateButtonStates();
+            }
+
+            attachEventListeners() {
+                // Selection change handlers
+                document.querySelectorAll('.field-select').forEach(select => {
+                    select.addEventListener('change', (e) => {
+                        this.handleSelection(e.target);
+                    });
+                });
+
+                // Content field handlers
+                document.addEventListener('input', (e) => {
+                    if (e.target.classList.contains('field-input')) {
+                        this.updateCharCounter(e.target);
+                    }
+                });
+
+                // Hashtag input handler
+                const hashtagInput = document.getElementById('hashtag-input');
+                if (hashtagInput) {
+                    hashtagInput.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ',') {
+                            e.preventDefault();
+                            this.addHashtag();
+                        }
+                    });
+                }
+            }
+
+            handleSelection(selectElement) {
+                const field = selectElement.dataset.field;
+                const value = selectElement.value;
+                const selectedOption = selectElement.options[selectElement.selectedIndex];
+                const code = selectedOption.dataset.code;
+
+                if (value) {
+                    this.selections[field] = { value, code };
+                    selectElement.classList.add('completed');
+                } else {
+                    this.selections[field] = null;
+                    selectElement.classList.remove('completed');
+                }
+
+                this.updateTemplateId();
+                this.updateButtonStates();
+
+                console.log('Selection updated:', field, this.selections[field]);
+            }
+
+            updateTemplateId() {
+                const theme = this.selections.theme?.code || 'XX';
+                const audience = this.selections.audience?.code || 'XX';
+                const media = this.selections.media?.code || 'XX';
+                const template = this.selections.template_type?.code || 'XX';
+                
+                this.templateId = `${theme}-${audience}-${media}-${template}-001`;
+                
+                document.getElementById('template-id-display').textContent = this.templateId;
+                
+                // Update breakdown
+                const parts = [
+                    this.selections.theme ? this.formatDisplayName(this.selections.theme.value) : 'Theme',
+                    this.selections.audience ? this.formatDisplayName(this.selections.audience.value) : 'Audience',
+                    this.selections.media ? this.formatDisplayName(this.selections.media.value) : 'Media', 
+                    this.selections.template_type ? this.formatDisplayName(this.selections.template_type.value) : 'Template',
+                    'Auto Number'
+                ];
+                
+                document.getElementById('template-id-breakdown').textContent = parts.join(' - ');
+            }
+
+            updateButtonStates() {
+                const requiredFields = ['theme', 'audience', 'media', 'template_type'];
+                const allRequired = requiredFields.every(field => this.selections[field]);
+                
+                document.getElementById('search-btn').disabled = !allRequired;
+                document.getElementById('proceed-btn').disabled = !allRequired;
+                
+                // Forward button needs platform selection too
+                const forwardBtn = document.getElementById('forward-btn');
+                if (forwardBtn) {
+                    forwardBtn.disabled = !allRequired || !this.selections.platform;
+                }
+            }
+
+            proceedToCreation() {
+                if (!this.isValidForCreation()) {
+                    alert('Please complete all required fields (Theme, Audience, Media, Template Type)');
+                    return;
+                }
+
+                this.currentPhase = 'creation';
+                document.getElementById('selection-phase').classList.add('hidden');
+                document.getElementById('creation-phase').classList.add('visible');
+                
+                // Update step indicator
+                document.getElementById('step-select').classList.remove('active');
+                document.getElementById('step-select').classList.add('completed');
+                document.getElementById('step-create').classList.add('active');
+
+                this.setupContentFields();
+                console.log('Proceeding to creation phase');
+            }
+
+            setupContentFields() {
+                const platform = this.selections.platform?.value;
+                
+                if (platform) {
+                    this.setupPlatformSpecificFields(platform);
+                } else {
+                    this.setupGenericFields();
+                }
+            }
+
+            setupPlatformSpecificFields(platform) {
+                const platformConfigs = {
+                    instagram: {
+                        title: { show: true, maxLength: 125, placeholder: "Instagram post title..." },
+                        description: { show: true, maxLength: 2200, placeholder: "Caption for your Instagram post..." },
+                        hashtags: { show: true, maxCount: 30, recommended: 11 },
+                        keywords: { show: false },
+                        cta: { show: true, maxLength: 50 }
+                    },
+                    twitter: {
+                        title: { show: false },
+                        description: { show: true, maxLength: 280, placeholder: "Your tweet content..." },
+                        hashtags: { show: true, maxCount: 2, recommended: 1 },
+                        keywords: { show: false },
+                        cta: { show: true, maxLength: 25 }
+                    },
+                    linkedin: {
+                        title: { show: true, maxLength: 150, placeholder: "Professional headline..." },
+                        description: { show: true, maxLength: 3000, placeholder: "Professional post content..." },
+                        hashtags: { show: true, maxCount: 5, recommended: 3 },
+                        keywords: { show: true },
+                        cta: { show: true, maxLength: 80 }
+                    },
+                    youtube: {
+                        title: { show: true, maxLength: 100, placeholder: "YouTube video title..." },
+                        description: { show: true, maxLength: 5000, placeholder: "Video description..." },
+                        hashtags: { show: true, maxCount: 15, recommended: 5 },
+                        keywords: { show: true },
+                        cta: { show: true, maxLength: 100 }
+                    },
+                    facebook: {
+                        title: { show: true, maxLength: 120, placeholder: "Facebook post title..." },
+                        description: { show: true, maxLength: 2000, placeholder: "Facebook post content..." },
+                        hashtags: { show: true, maxCount: 5, recommended: 2 },
+                        keywords: { show: false },
+                        cta: { show: true, maxLength: 60 }
+                    },
+                    tiktok: {
+                        title: { show: false },
+                        description: { show: true, maxLength: 2200, placeholder: "TikTok caption..." },
+                        hashtags: { show: true, maxCount: 20, recommended: 5 },
+                        keywords: { show: false },
+                        cta: { show: true, maxLength: 30 }
+                    },
+                    telegram: {
+                        title: { show: true, maxLength: 100, placeholder: "Message title..." },
+                        description: { show: true, maxLength: 4096, placeholder: "Telegram message content..." },
+                        hashtags: { show: true, maxCount: 10, recommended: 3 },
+                        keywords: { show: false },
+                        cta: { show: true, maxLength: 50 }
+                    },
+                    pinterest: {
+                        title: { show: true, maxLength: 100, placeholder: "Pin title..." },
+                        description: { show: true, maxLength: 500, placeholder: "Pin description..." },
+                        hashtags: { show: true, maxCount: 20, recommended: 8 },
+                        keywords: { show: true },
+                        cta: { show: true, maxLength: 50 }
+                    },
+                    whatsapp: {
+                        title: { show: false },
+                        description: { show: true, maxLength: 700, placeholder: "WhatsApp status..." },
+                        hashtags: { show: true, maxCount: 5, recommended: 2 },
+                        keywords: { show: false },
+                        cta: { show: true, maxLength: 30 }
+                    }
+                };
+
+                const config = platformConfigs[platform] || this.getDefaultConfig();
+                this.applyFieldConfiguration(config);
+                this.updatePlatformInfo(platform, config);
+            }
+
+            setupGenericFields() {
+                const config = this.getDefaultConfig();
+                this.applyFieldConfiguration(config);
+                this.updatePlatformInfo('generic', config);
+            }
+
+            getDefaultConfig() {
+                return {
+                    title: { show: true, maxLength: 150, placeholder: "Enter your title..." },
+                    description: { show: true, maxLength: 2200, placeholder: "Enter your content..." },
+                    hashtags: { show: true, maxCount: 30, recommended: 10 },
+                    keywords: { show: true },
+                    cta: { show: true, maxLength: 100 }
+                };
+            }
+
+            applyFieldConfiguration(config) {
+                // Title field
+                const titleField = document.getElementById('title-field');
+                const titleInput = document.getElementById('title-input');
+                const titleCounter = document.getElementById('title-counter');
+                
+                if (config.title.show) {
+                    titleField.classList.remove('hidden');
+                    titleInput.placeholder = config.title.placeholder;
+                    titleInput.maxLength = config.title.maxLength;
+                    titleCounter.textContent = `0/${config.title.maxLength}`;
+                } else {
+                    titleField.classList.add('hidden');
+                }
+
+                // Description field
+                const descInput = document.getElementById('description-input');
+                const descCounter = document.getElementById('description-counter');
+                descInput.placeholder = config.description.placeholder;
+                descInput.maxLength = config.description.maxLength;
+                descCounter.textContent = `0/${config.description.maxLength}`;
+
+                // Hashtag field
+                const hashtagCounter = document.getElementById('hashtag-counter');
+                hashtagCounter.textContent = `0/${config.hashtags.maxCount}`;
+
+                // Keywords field
+                const keywordsField = document.getElementById('keywords-field');
+                if (config.keywords.show) {
+                    keywordsField.classList.remove('hidden');
+                } else {
+                    keywordsField.classList.add('hidden');
+                }
+
+                // CTA field
+                const ctaInput = document.getElementById('cta-input');
+                const ctaCounter = document.getElementById('cta-counter');
+                ctaInput.maxLength = config.cta.maxLength;
+                ctaCounter.textContent = `0/${config.cta.maxLength}`;
+
+                // Store config for validation
+                this.fieldConfig = config;
+            }
+
+            updatePlatformInfo(platform, config) {
+                const platformTitle = document.getElementById('platform-title');
+                const platformDesc = document.getElementById('platform-description');
+                const platformSpecs = document.getElementById('platform-specs');
+
+                if (platform === 'generic') {
+                    platformTitle.textContent = 'Template Creation';
+                    platformDesc.textContent = 'Fill in the content fields based on your selections';
+                    platformSpecs.innerHTML = '';
+                } else {
+                    const platformNames = {
+                        instagram: 'Instagram',
+                        twitter: 'Twitter/X', 
+                        linkedin: 'LinkedIn',
+                        youtube: 'YouTube',
+                        facebook: 'Facebook',
+                        tiktok: 'TikTok',
+                        telegram: 'Telegram',
+                        pinterest: 'Pinterest',
+                        whatsapp: 'WhatsApp Business'
+                    };
+
+                    platformTitle.textContent = `${platformNames[platform] || platform} Template Creation`;
+                    platformDesc.textContent = `Optimized for ${platformNames[platform] || platform} specifications and best practices`;
+                    
+                    // Create specs display
+                    const specs = [
+                        { label: 'Description Limit', value: `${config.description.maxLength} characters` },
+                        { label: 'Hashtag Limit', value: `${config.hashtags.maxCount} hashtags` },
+                        { label: 'Recommended Tags', value: `${config.hashtags.recommended} hashtags` }
+                    ];
+
+                    if (config.title.show) {
+                        specs.unshift({ label: 'Title Limit', value: `${config.title.maxLength} characters` });
+                    }
+
+                    platformSpecs.innerHTML = specs.map(spec => `
+                        <div class="spec-item">
+                            <div class="spec-label">${spec.label}</div>
+                            <div class="spec-value">${spec.value}</div>
+                        </div>
+                    `).join('');
+                }
+            }
+
+            updateCharCounter(input) {
+                const current = input.value.length;
+                const max = parseInt(input.maxLength) || 1000;
+                const counterId = input.id.replace('-input', '-counter');
+                const counter = document.getElementById(counterId);
+                
+                if (counter) {
+                    counter.textContent = `${current}/${max}`;
+                    
+                    // Update styling based on usage
+                    if (current > max * 0.9) {
+                        counter.className = 'char-counter error';
+                    } else if (current > max * 0.8) {
+                        counter.className = 'char-counter warning';
+                    } else {
+                        counter.className = 'char-counter';
+                    }
+                }
+            }
+
+            addHashtag() {
+                const input = document.getElementById('hashtag-input');
+                const tag = input.value.trim().replace(/^#/, '');
+                
+                if (!tag || this.hashtags.includes(tag)) {
+                    input.value = '';
+                    return;
+                }
+
+                const maxHashtags = this.fieldConfig?.hashtags?.maxCount || 30;
+                if (this.hashtags.length >= maxHashtags) {
+                    alert(`Maximum ${maxHashtags} hashtags allowed`);
+                    return;
+                }
+
+                this.hashtags.push(tag);
+                this.renderHashtags();
+                input.value = '';
+                
+                const counter = document.getElementById('hashtag-counter');
+                counter.textContent = `${this.hashtags.length}/${maxHashtags}`;
+            }
+
+            removeHashtag(tag) {
+                this.hashtags = this.hashtags.filter(t => t !== tag);
+                this.renderHashtags();
+                
+                const maxHashtags = this.fieldConfig?.hashtags?.maxCount || 30;
+                const counter = document.getElementById('hashtag-counter');
+                counter.textContent = `${this.hashtags.length}/${maxHashtags}`;
+            }
+
+            renderHashtags() {
+                const list = document.getElementById('hashtag-list');
+                list.innerHTML = this.hashtags.map(tag => `
+                    <div class="hashtag-tag">
+                        #${tag}
+                        <button class="remove-hashtag" onclick="builder.removeHashtag('${tag}')">&times;</button>
+                    </div>
+                `).join('');
+            }
+
+            backToSelection() {
+                this.currentPhase = 'selection';
+                document.getElementById('creation-phase').classList.remove('visible');
+                document.getElementById('selection-phase').classList.remove('hidden');
+                
+                // Update step indicator
+                document.getElementById('step-create').classList.remove('active');
+                document.getElementById('step-select').classList.add('active');
+                document.getElementById('step-select').classList.remove('completed');
+            }
+
+            isValidForCreation() {
+                const required = ['theme', 'audience', 'media', 'template_type'];
+                return required.every(field => this.selections[field]);
+            }
+
+            formatDisplayName(value) {
+                return value.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            }
+
+            exportSelections() {
+                const contentData = {
+                    title: document.getElementById('title-input')?.value || '',
+                    description: document.getElementById('description-input')?.value || '',
+                    hashtags: this.hashtags,
+                    keywords: document.getElementById('keywords-input')?.value || '',
+                    credits: document.getElementById('credits-input')?.value || '',
+                    cta: document.getElementById('cta-input')?.value || ''
+                };
+
+                return {
+                    templateId: this.templateId,
+                    selections: this.selections,
+                    content: contentData,
+                    timestamp: new Date().toISOString(),
+                    phase: this.currentPhase,
+                    isValid: this.isValidForCreation()
+                };
+            }
+        }
+
+        // Initialize builder
+        const builder = new TemplateBuilder();
+
+        // Global functions
+        function proceedToCreation() {
+            builder.proceedToCreation();
+        }
+
+        function backToSelection() {
+            builder.backToSelection();
+        }
+
+        function addHashtag() {
+            builder.addHashtag();
+        }
+
+        function searchTemplate() {
+            if (!builder.isValidForCreation()) {
+                alert('Please complete all required fields before searching');
+                return;
+            }
+
+            const searchId = builder.templateId.substring(0, builder.templateId.lastIndexOf('-'));
+            console.log('Searching for templates with pattern:', searchId);
+            
+            // This would call your Notion API search
+            alert(`Searching for templates matching: ${searchId}-XXX\n\nOptions:\n- Edit existing\n- Make a copy\n- Create new\n- Exit`);
+        }
+
+        function previewTemplate() {
+            const data = builder.exportSelections();
+            console.log('Template preview:', data);
+            alert('Template preview functionality - would show formatted template preview');
+        }
+
+        function saveTemplate() {
+            const data = builder.exportSelections();
+            console.log('Saving template:', data);
+            
+            // This would call your Notion API save function
+            alert(`Template saved successfully!\nID: ${data.templateId}`);
+        }
+
+        function forwardToDashboard() {
+            if (!builder.selections.platform) {
+                alert('Please select a platform before forwarding to dashboard');
+                return;
+            }
+
+            const data = builder.exportSelections();
+            console.log('Forwarding to dashboard:', data);
+            
+            // This would call your dashboard forwarding API
+            alert(`Template forwarded to dashboard!\nID: ${data.templateId}\nPlatform: ${builder.selections.platform.value}`);
+        }
+
+        function resetBuilder() {
+            if (confirm('Reset all selections and content? This cannot be undone.')) {
+                location.reload();
+            }
+        }
+
+        function loadTemplate() {
+            // This would load templates from Notion
+            alert('Load Template functionality - would search and load saved templates from Notion database');
+        }
+
+        // Make builder globally available
+        window.templateBuilder = builder;
+    </script>
+</body>
+</html>
