@@ -1188,17 +1188,286 @@
             builder.addHashtag();
         }
 
-        function searchTemplate() {
+        // Enhanced searchTemplate function with delete functionality
+        async function searchTemplate() {
             if (!builder.isValidForCreation()) {
                 alert('Please complete all required fields before searching');
                 return;
             }
 
-            const searchId = builder.templateId.substring(0, builder.templateId.lastIndexOf('-'));
-            console.log('Searching for templates with pattern:', searchId);
+            const searchPattern = builder.templateId.substring(0, builder.templateId.lastIndexOf('-'));
+            console.log('Searching for templates with pattern:', searchPattern);
             
-            // This would call your Notion API search
-            alert(`Searching for templates matching: ${searchId}-XXX\n\nOptions:\n- Edit existing\n- Make a copy\n- Create new\n- Exit`);
+            try {
+                // Show loading state
+                const searchBtn = document.getElementById('search-btn');
+                const originalText = searchBtn.textContent;
+                searchBtn.textContent = 'Searching...';
+                searchBtn.disabled = true;
+
+                // Call Notion integration if available
+                if (window.notionIntegration) {
+                    const existingTemplates = await window.notionIntegration.searchExistingTemplates(builder.templateId);
+                    
+                    if (existingTemplates.length > 0) {
+                        showTemplateSearchResults(existingTemplates, searchPattern);
+                    } else {
+                        alert(`No existing templates found for pattern: ${searchPattern}-XXX\n\nYou can proceed to create the first template with this pattern.`);
+                    }
+                } else {
+                    // Mock results for testing without Notion integration
+                    showMockSearchResults(searchPattern);
+                }
+
+            } catch (error) {
+                console.error('Search error:', error);
+                alert('Error searching for templates. Please try again.');
+            } finally {
+                // Reset button state
+                const searchBtn = document.getElementById('search-btn');
+                searchBtn.textContent = originalText;
+                searchBtn.disabled = false;
+            }
+        }
+
+        // Show search results with action options
+        function showTemplateSearchResults(templates, searchPattern) {
+            const templateList = templates.map((template, index) => {
+                const templateId = template.properties.template_id.title[0]?.text?.content || 'Unknown';
+                const status = template.properties.status.select?.name || 'Unknown';
+                const dateCreated = new Date(template.created_time).toLocaleDateString();
+                return `${index + 1}. ${templateId} | Status: ${status} | Created: ${dateCreated}`;
+            }).join('\n');
+
+            const userChoice = prompt(`Found ${templates.length} existing template(s) matching pattern: ${searchPattern}-XXX\n\n${templateList}\n\nChoose your action:\n1 - Edit existing template (enter template number)\n2 - Make a copy of template (enter template number)\n3 - Delete template (enter template number)\n4 - Create new template\n0 - Cancel\n\nEnter your choice:`);
+
+            if (!userChoice || userChoice === '0') {
+                return; // User cancelled
+            }
+
+            handleSearchAction(userChoice, templates, searchPattern);
+        }
+
+        // Handle user's search action choice
+        async function handleSearchAction(choice, templates, searchPattern) {
+            const choiceNum = parseInt(choice);
+            
+            if (choiceNum === 4) {
+                // Create new template - proceed as normal
+                console.log('User chose to create new template');
+                return;
+            }
+            
+            if (choiceNum >= 1 && choiceNum <= 3) {
+                // Actions requiring template selection
+                const templateIndex = prompt(`Enter template number (1-${templates.length}) for this action:`);
+                const index = parseInt(templateIndex) - 1;
+                
+                if (index >= 0 && index < templates.length) {
+                    const selectedTemplate = templates[index];
+                    const templateId = selectedTemplate.properties.template_id.title[0]?.text?.content;
+                    
+                    switch (choiceNum) {
+                        case 1:
+                            await editExistingTemplate(selectedTemplate);
+                            break;
+                        case 2:
+                            await copyExistingTemplate(selectedTemplate, searchPattern);
+                            break;
+                        case 3:
+                            await deleteTemplate(selectedTemplate, templateId);
+                            break;
+                    }
+                } else {
+                    alert('Invalid template number selected.');
+                }
+            } else {
+                alert('Invalid choice. Please try again.');
+            }
+        }
+
+        // Edit existing template
+        async function editExistingTemplate(template) {
+            try {
+                console.log('Loading template for editing:', template.id);
+                
+                if (window.notionIntegration) {
+                    const templateData = await window.notionIntegration.loadTemplate(
+                        template.properties.template_id.title[0]?.text?.content
+                    );
+                    
+                    // Populate form with existing data
+                    populateFormWithTemplate(templateData);
+                    
+                    // Switch to creation phase
+                    builder.proceedToCreation();
+                    
+                    alert('Template loaded for editing. Make your changes and save.');
+                }
+            } catch (error) {
+                console.error('Error loading template:', error);
+                alert('Error loading template for editing.');
+            }
+        }
+
+        // Copy existing template with new number
+        async function copyExistingTemplate(template, searchPattern) {
+            try {
+                console.log('Copying template:', template.id);
+                
+                if (window.notionIntegration) {
+                    const templateData = await window.notionIntegration.loadTemplate(
+                        template.properties.template_id.title[0]?.text?.content
+                    );
+                    
+                    // Generate new template ID
+                    const newTemplateId = await window.notionIntegration.generateTemplateId(templateData.selections);
+                    templateData.templateId = newTemplateId;
+                    
+                    // Populate form with copied data
+                    populateFormWithTemplate(templateData);
+                    
+                    // Switch to creation phase
+                    builder.proceedToCreation();
+                    
+                    alert(`Template copied! New ID: ${newTemplateId}\nMake any changes needed and save.`);
+                }
+            } catch (error) {
+                console.error('Error copying template:', error);
+                alert('Error copying template.');
+            }
+        }
+
+        // Delete template and repurpose number
+        async function deleteTemplate(template, templateId) {
+            const confirmDelete = confirm(`Are you sure you want to DELETE template: ${templateId}?\n\nThis action cannot be undone.\nThe template number will be available for reuse.`);
+            
+            if (!confirmDelete) {
+                return;
+            }
+            
+            try {
+                console.log('Deleting template:', templateId);
+                
+                if (window.notionIntegration) {
+                    // Archive the template (safer than permanent delete)
+                    await fetch(`https://api.notion.com/v1/pages/${template.id}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Authorization': `Bearer ${window.notionIntegration.notionToken}`,
+                            'Content-Type': 'application/json',
+                            'Notion-Version': '2022-06-28'
+                        },
+                        body: JSON.stringify({
+                            properties: {
+                                status: {
+                                    select: { name: 'Deleted' }
+                                },
+                                is_active: {
+                                    checkbox: false
+                                }
+                            }
+                        })
+                    });
+                    
+                    // Mark template number as available for reuse
+                    const templateNumber = templateId.split('-').pop();
+                    console.log(`Template ${templateId} archived. Number ${templateNumber} available for reuse.`);
+                    
+                    alert(`Template ${templateId} successfully deleted!\nTemplate number ${templateNumber} is now available for reuse.`);
+                    
+                } else {
+                    // Mock deletion for testing
+                    alert(`Template ${templateId} would be deleted.\nTemplate number would be available for reuse.`);
+                }
+                
+            } catch (error) {
+                console.error('Error deleting template:', error);
+                alert('Error deleting template. Please try again.');
+            }
+        }
+
+        // Populate form with template data
+        function populateFormWithTemplate(templateData) {
+            // Populate selection fields
+            if (templateData.selections.theme) {
+                document.getElementById('theme-select').value = templateData.selections.theme.value;
+                builder.handleSelection(document.getElementById('theme-select'));
+            }
+            
+            if (templateData.selections.character) {
+                document.getElementById('character-select').value = templateData.selections.character.value;
+                builder.handleSelection(document.getElementById('character-select'));
+            }
+            
+            if (templateData.selections.voice) {
+                document.getElementById('voice-select').value = templateData.selections.voice.value;
+                builder.handleSelection(document.getElementById('voice-select'));
+            }
+            
+            if (templateData.selections.audience) {
+                document.getElementById('audience-select').value = templateData.selections.audience.value;
+                builder.handleSelection(document.getElementById('audience-select'));
+            }
+            
+            if (templateData.selections.media) {
+                document.getElementById('media-select').value = templateData.selections.media.value;
+                builder.handleSelection(document.getElementById('media-select'));
+            }
+            
+            if (templateData.selections.template_type) {
+                document.getElementById('template-type-select').value = templateData.selections.template_type.value;
+                builder.handleSelection(document.getElementById('template-type-select'));
+            }
+            
+            if (templateData.selections.platform) {
+                document.getElementById('platform-select').value = templateData.selections.platform.value;
+                builder.handleSelection(document.getElementById('platform-select'));
+            }
+            
+            // Populate content fields (done in creation phase)
+            setTimeout(() => {
+                if (templateData.content.title) {
+                    document.getElementById('title-input').value = templateData.content.title;
+                }
+                if (templateData.content.description) {
+                    document.getElementById('description-input').value = templateData.content.description;
+                }
+                if (templateData.content.hashtags) {
+                    builder.hashtags = [...templateData.content.hashtags];
+                    builder.renderHashtags();
+                }
+                if (templateData.content.keywords) {
+                    document.getElementById('keywords-input').value = templateData.content.keywords;
+                }
+                if (templateData.content.credits) {
+                    document.getElementById('credits-input').value = templateData.content.credits;
+                }
+                if (templateData.content.cta) {
+                    document.getElementById('cta-input').value = templateData.content.cta;
+                }
+            }, 100);
+        }
+
+        // Mock search results for testing without Notion
+        function showMockSearchResults(searchPattern) {
+            const mockTemplates = [
+                { id: '1', templateId: `${searchPattern}-001`, status: 'Template', created: '2024-12-15' },
+                { id: '2', templateId: `${searchPattern}-002`, status: 'Draft', created: '2024-12-20' },
+                { id: '3', templateId: `${searchPattern}-003`, status: 'Forwarded', created: '2025-01-01' }
+            ];
+            
+            const templateList = mockTemplates.map((template, index) => 
+                `${index + 1}. ${template.templateId} | Status: ${template.status} | Created: ${template.created}`
+            ).join('\n');
+            
+            const choice = prompt(`Found ${mockTemplates.length} existing template(s) matching pattern: ${searchPattern}-XXX\n\n${templateList}\n\nChoose your action:\n1 - Edit existing template\n2 - Make a copy of template\n3 - Delete template\n4 - Create new template\n0 - Cancel\n\nEnter your choice:`);
+            
+            if (choice === '4') {
+                alert('Proceeding to create new template...');
+            } else if (choice && choice !== '0') {
+                alert(`Mock action: You selected option ${choice}.\nIn production, this would ${choice === '1' ? 'edit' : choice === '2' ? 'copy' : 'delete'} the selected template.`);
+            }
         }
 
         function previewTemplate() {
