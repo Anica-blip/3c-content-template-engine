@@ -1,5 +1,5 @@
 // Notion Integration for 3C Template Engine
-// Add this to your existing script.js or create as separate file
+// Updated with new dashboard URL
 
 class NotionIntegration {
     constructor() {
@@ -145,10 +145,20 @@ class NotionIntegration {
                 headers: this.headers,
                 body: JSON.stringify({
                     filter: {
-                        property: 'template_id',
-                        title: {
-                            starts_with: basePattern
-                        }
+                        and: [
+                            {
+                                property: 'template_id',
+                                title: {
+                                    starts_with: basePattern
+                                }
+                            },
+                            {
+                                property: 'status',
+                                select: {
+                                    does_not_equal: 'Deleted'
+                                }
+                            }
+                        ]
                     },
                     sorts: [
                         {
@@ -188,12 +198,12 @@ class NotionIntegration {
                             select: { 
                                 name: this.formatSelectValue(templateData.selections.character.value)
                             }
-                        } : null,
+                        } : { select: null },
                         brand_voice: templateData.selections.voice ? {
                             select: { 
                                 name: this.formatSelectValue(templateData.selections.voice.value)
                             }
-                        } : null,
+                        } : { select: null },
                         target_audience: {
                             select: { 
                                 name: this.formatSelectValue(templateData.selections.audience.value)
@@ -213,7 +223,7 @@ class NotionIntegration {
                             select: { 
                                 name: this.formatSelectValue(templateData.selections.platform.value)
                             }
-                        } : null,
+                        } : { select: null },
                         auto_number: {
                             number: parseInt(templateData.templateId.split('-').pop())
                         },
@@ -281,7 +291,7 @@ class NotionIntegration {
                             select: { 
                                 name: this.formatSelectValue(templateData.selections.platform.value)
                             }
-                        } : null,
+                        } : { select: null },
                         status: {
                             select: { name: 'Pending' }
                         },
@@ -386,8 +396,8 @@ class NotionIntegration {
             },
             content: JSON.parse(properties.content_data.rich_text[0]?.text?.content || '{}'),
             notionPageId: notionPage.id,
-            created: properties.date_created.created_time,
-            modified: properties.last_modified.last_edited_time
+            created: properties.date_created?.created_time,
+            modified: properties.last_modified?.last_edited_time
         };
     }
 
@@ -401,11 +411,12 @@ class NotionIntegration {
     }
 
     generateDashboardUrl(member, forwardId, templateId) {
-        const baseUrl = process.env.DASHBOARD_BASE_URL || 'https://threadcommand.center/dashboard/settings';
+        // Updated dashboard URL
+        const baseUrl = 'https://3c-control-center.vercel.app/#content-manager';
         return `${baseUrl}?member=${member}&forward_id=${forwardId}&template_id=${templateId}`;
     }
 
-    // Code mapping functions (you'll need to implement these based on your mapping logic)
+    // Code mapping functions
     getThemeCode(value) {
         const codes = {
             'news_alert': 'NA',
