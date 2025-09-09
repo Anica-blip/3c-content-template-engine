@@ -495,9 +495,6 @@
     </style>
 </head>
 <body>
-    <!-- Connection Status Indicator -->
-    <div class="connection-status" id="connection-status">Checking connection...</div>
-
     <!-- Header -->
     <header class="app-header">
         <div class="container">
@@ -509,6 +506,8 @@
                 <div>
                     <button class="btn btn-outline" onclick="resetBuilder()">Reset</button>
                     <button class="btn btn-outline" onclick="loadTemplate()">Load Template</button>
+                    <!-- Connection Status moved here -->
+                    <div class="connection-status" id="connection-status" style="margin-left: 1rem;">Checking connection...</div>
                 </div>
             </div>
         </div>
@@ -786,22 +785,18 @@
     <script type="module">
         import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js';
         
-        const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL || 'https://your-project.supabase.co';
-        const supabaseKey = import.meta.env?.VITE_SUPABASE_PUBLISHABLE_KEY || 'your-anon-public-key';
+        // Your actual Supabase credentials
+        const supabaseUrl = 'https://uqyqpwhkzlhqxcqajhkn.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxeXFwd2hremxocXhjcWFqaGtuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA2NzY3MDMsImV4cCI6MjA2NjI1MjcwM30.AE-bdpBIATQCtNWvWo468ZWPwQ-9LWghRO6-BeAzA2U';
 
         // Initialize Supabase client
         let supabase = null;
         let connectionStatus = 'disconnected';
 
         try {
-            if (supabaseUrl && supabaseKey && !supabaseUrl.includes('your-project') && !supabaseKey.includes('your-anon')) {
-                supabase = createClient(supabaseUrl, supabaseKey);
-                connectionStatus = 'connected';
-                console.log('Supabase client created successfully');
-            } else {
-                console.warn('Using placeholder Supabase credentials');
-                connectionStatus = 'disconnected';
-            }
+            supabase = createClient(supabaseUrl, supabaseKey);
+            connectionStatus = 'connected';
+            console.log('Supabase client created successfully');
         } catch (error) {
             console.error('Error creating Supabase client:', error);
             connectionStatus = 'disconnected';
