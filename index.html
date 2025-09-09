@@ -1076,9 +1076,6 @@
             async deleteTemplate(templateId) {
                 if (!supabase) throw new Error('Supabase not configured');
                 try {
-                    // COMPLIANCE: Validate user authentication
-                    await this.validateUser();
-                    
                     const { error } = await supabase
                         .from('content_templates')
                         .update({ 
@@ -1100,9 +1097,6 @@
             async forwardToDashboard(templateData) {
                 if (!supabase) throw new Error('Supabase not configured');
                 try {
-                    // COMPLIANCE: Validate user authentication
-                    await this.validateUser();
-                    
                     // Update status to forwarded
                     const { error } = await supabase
                         .from('content_templates')
