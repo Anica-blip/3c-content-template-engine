@@ -789,16 +789,15 @@
         </div>
     </main>
 
-    <!-- Import Supabase client -->
+    <!-- Supabase Integration -->
     <script type="module">
         import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js';
         
-        // Supabase credentials - Embedded directly for HTML (no .env support)
-        // These are your actual production Supabase credentials
+        // Supabase credentials for HTML (public access)
         const supabaseUrl = 'https://uqyqpwhkzlhqxcqajhkn.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxeXFwd2hremxocXhjcWFqaGtuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA2NzY3MDMsImV4cCI6MjA2NjI1MjcwM30.AE-bdpBIATQCtNWvWo468ZWPwQ-9LWghRO6-BeAzA2U';
 
-        // Initialize Supabase client with validation
+        // Initialize Supabase client
         let supabase = null;
         let connectionStatus = 'disconnected';
 
@@ -811,45 +810,19 @@
             connectionStatus = 'disconnected';
         }
 
-        // Update connection status indicator
-        const statusElement = document.getElementById('connection-status');
-        if (connectionStatus === 'connected') {
-            statusElement.textContent = 'Supabase Connected';
-            statusElement.className = 'connection-status connected';
-        } else {
-            statusElement.textContent = 'Supabase Disconnected';
-            statusElement.className = 'connection-status disconnected';
-        }
-
-        // Template Engine API
+        // Template Engine API - NO AUTHENTICATION REQUIRED
         const templateEngineAPI = {
-            // Validate user authentication (COMPLIANCE REQUIREMENT)
-            async validateUser() {
-                if (!supabase) throw new Error('Supabase not configured');
-                const { data: { user } } = await supabase.auth.getUser();
-                if (!user?.id) {
-                    throw new Error('User must be authenticated for database operations');
-                }
-                return user.id;
-            },
-
-            // Search for existing templates by pattern
+            // Search templates
             async searchExistingTemplates(templateId) {
                 if (!supabase) throw new Error('Supabase not configured');
                 try {
-                    // COMPLIANCE: Validate user authentication
-                    await this.validateUser();
-                    
                     const searchPattern = templateId.substring(0, templateId.lastIndexOf('-'));
-                    console.log('Searching for pattern:', searchPattern);
-                    
                     const { data, error } = await supabase
                         .from('content_templates')
                         .select('*')
                         .like('template_id', `${searchPattern}-%`)
                         .eq('is_active', true)
                         .order('created_at', { ascending: false });
-                        
                     if (error) throw error;
                     return data || [];
                 } catch (error) {
@@ -858,23 +831,17 @@
                 }
             },
 
-            // Load specific template by ID
+            // Load template
             async loadTemplate(templateId) {
                 if (!supabase) throw new Error('Supabase not configured');
                 try {
-                    // COMPLIANCE: Validate user authentication
-                    await this.validateUser();
-                    
                     const { data, error } = await supabase
                         .from('content_templates')
                         .select('*')
                         .eq('template_id', templateId)
                         .eq('is_active', true)
                         .single();
-                        
                     if (error) throw error;
-                    
-                    // Transform data back to expected format
                     return {
                         templateId: data.template_id,
                         selections: {
@@ -904,21 +871,16 @@
                 }
             },
 
-            // Generate next available template ID
+            // Generate template ID
             async generateTemplateId(selections) {
                 if (!supabase) throw new Error('Supabase not configured');
                 try {
-                    // COMPLIANCE: Validate user authentication
-                    await this.validateUser();
-                    
                     const theme = selections.theme?.code || 'XX';
                     const audience = selections.audience?.code || 'XX';
                     const media = selections.media?.code || 'XX';
                     const template = selections.template_type?.code || 'XX';
-                    
                     const pattern = `${theme}-${audience}-${media}-${template}`;
                     
-                    // Find highest number for this pattern
                     const { data, error } = await supabase
                         .from('content_templates')
                         .select('template_id')
@@ -926,7 +888,6 @@
                         .eq('is_active', true)
                         .order('template_id', { ascending: false })
                         .limit(1);
-                        
                     if (error) throw error;
                     
                     let nextNumber = 1;
@@ -935,7 +896,6 @@
                         const lastNumber = parseInt(lastId.split('-').pop());
                         nextNumber = lastNumber + 1;
                     }
-                    
                     return `${pattern}-${String(nextNumber).padStart(3, '0')}`;
                 } catch (error) {
                     console.error('Error generating template ID:', error);
@@ -943,20 +903,12 @@
                 }
             },
 
-            // Save template
+            // Save template - PUBLIC ACCESS
             async saveTemplate(templateData) {
                 if (!supabase) throw new Error('Supabase not configured');
                 try {
-                    console.log('=== DETAILED SAVE DEBUGGING ===');
-                    console.log('1. Template data to save:', templateData);
-                    
-                    // Skip user validation for public auth
-                    console.log('2. Skipping user validation (public auth)');
-                    
                     const insertData = {
                         template_id: templateData.templateId,
-                        
-                        // Selection data
                         theme_value: templateData.selections.theme?.value || null,
                         theme_code: templateData.selections.theme?.code || null,
                         character_value: templateData.selections.character?.value || null,
@@ -969,122 +921,61 @@
                         template_type_code: templateData.selections.template_type?.code || null,
                         platform_value: templateData.selections.platform?.value || null,
                         platform_code: templateData.selections.platform?.code || null,
-                        
-                        // Content data
                         content_title: templateData.content.title || null,
                         content_description: templateData.content.description || null,
                         content_hashtags: templateData.content.hashtags || [],
                         content_keywords: templateData.content.keywords || null,
                         content_credits: templateData.content.credits || null,
                         content_cta: templateData.content.cta || null,
-                        
-                        // Metadata
                         phase: templateData.phase || 'creation',
                         status: 'template',
-                        
-                        // Set user_id as null for public auth
                         user_id: null,
                         created_by: null,
                         is_active: true
                     };
                     
-                    console.log('3. Insert data prepared:', insertData);
-                    
-                    // Check if template exists first
-                    console.log('4. Checking if template exists...');
-                    let existing;
-                    try {
-                        const { data: existingData, error: selectError } = await supabase
-                            .from('content_templates')
-                            .select('id')
-                            .eq('template_id', templateData.templateId)
-                            .eq('is_active', true)
-                            .maybeSingle();
-                            
-                        if (selectError) {
-                            console.error('Select error details:', selectError);
-                            throw new Error(`Select failed: ${selectError.message}`);
-                        }
-                        
-                        existing = existingData;
-                        console.log('5. Existing template check result:', existing);
-                    } catch (selectErr) {
-                        console.error('Error checking existing template:', selectErr);
-                        throw selectErr;
-                    }
+                    // Check if exists
+                    const { data: existing } = await supabase
+                        .from('content_templates')
+                        .select('id')
+                        .eq('template_id', templateData.templateId)
+                        .eq('is_active', true)
+                        .maybeSingle();
                         
                     if (existing) {
-                        console.log('6. Updating existing template...');
-                        // Update existing
-                        const updateData = { ...insertData };
-                        delete updateData.created_by; // Don't overwrite original creator
-                        updateData.updated_at = new Date().toISOString();
-                        
+                        // Update
                         const { data, error } = await supabase
                             .from('content_templates')
-                            .update(updateData)
+                            .update({ ...insertData, updated_at: new Date().toISOString() })
                             .eq('id', existing.id)
                             .select()
                             .single();
-                            
-                        if (error) {
-                            console.error('Update error details:', error);
-                            throw new Error(`Update failed: ${error.message}`);
-                        }
-                        console.log('7. Update successful:', data);
+                        if (error) throw error;
                         return data;
                     } else {
-                        console.log('6. Inserting new template...');
-                        // Insert new
+                        // Insert
                         const { data, error } = await supabase
                             .from('content_templates')
                             .insert(insertData)
                             .select()
                             .single();
-                            
-                        if (error) {
-                            console.error('Insert error details:', error);
-                            console.error('Error code:', error.code);
-                            console.error('Error hint:', error.hint);
-                            console.error('Error details:', error.details);
-                            throw new Error(`Insert failed: ${error.message}`);
-                        }
-                        console.log('7. Insert successful:', data);
+                        if (error) throw error;
                         return data;
                     }
                 } catch (error) {
-                    console.error('=== SAVE TEMPLATE ERROR ===');
-                    console.error('Error type:', error.constructor.name);
-                    console.error('Error message:', error.message);
-                    console.error('Full error:', error);
-                    
-                    // Add network-level debugging
-                    if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
-                        console.error('NETWORK ERROR DETECTED:');
-                        console.error('- This is likely a CORS, network, or URL issue');
-                        console.error('- Check browser console for CORS errors');
-                        console.error('- Verify Supabase URL is accessible');
-                        
-                        throw new Error(`Network Error: Cannot reach Supabase server. Check: 1) Internet connection, 2) Supabase URL correct, 3) CORS settings in Supabase dashboard`);
-                    }
-                    
+                    console.error('Error saving template:', error);
                     throw error;
                 }
             },
 
-            // Delete/archive template
+            // Delete template
             async deleteTemplate(templateId) {
                 if (!supabase) throw new Error('Supabase not configured');
                 try {
                     const { error } = await supabase
                         .from('content_templates')
-                        .update({ 
-                            is_active: false, 
-                            status: 'deleted',
-                            updated_at: new Date().toISOString()
-                        })
+                        .update({ is_active: false, status: 'deleted', updated_at: new Date().toISOString() })
                         .eq('template_id', templateId);
-                        
                     if (error) throw error;
                     return true;
                 } catch (error) {
@@ -1093,19 +984,14 @@
                 }
             },
 
-            // Forward template to dashboard
+            // Forward to dashboard
             async forwardToDashboard(templateData) {
                 if (!supabase) throw new Error('Supabase not configured');
                 try {
-                    // Update status to forwarded
                     const { error } = await supabase
                         .from('content_templates')
-                        .update({ 
-                            status: 'forwarded',
-                            updated_at: new Date().toISOString()
-                        })
+                        .update({ status: 'forwarded', updated_at: new Date().toISOString() })
                         .eq('template_id', templateData.templateId);
-                        
                     if (error) throw error;
                     return true;
                 } catch (error) {
@@ -1115,24 +1001,37 @@
             }
         };
 
-        // Make API available globally
+        // Test connection
+        async function testConnection() {
+            const statusEl = document.getElementById('connection-status');
+            try {
+                const { data, error } = await supabase.from('content_templates').select('count').limit(1);
+                if (error) throw error;
+                statusEl.textContent = 'Supabase Ready';
+                statusEl.className = 'connection-status connected';
+            } catch (error) {
+                statusEl.textContent = `Error: ${error.message}`;
+                statusEl.className = 'connection-status disconnected';
+            }
+        }
+
+        // Make globally available
         window.templateEngineAPI = templateEngineAPI;
         window.supabase = supabase;
+        
+        // Test when ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', testConnection);
+        } else {
+            testConnection();
+        }
     </script>
 
     <script>
-        // Enhanced Template Builder with Platform-Specific Logic
+        // Template Builder
         class TemplateBuilder {
             constructor() {
-                this.selections = {
-                    theme: null,
-                    character: null,
-                    voice: null,
-                    audience: null,
-                    media: null,
-                    template_type: null,
-                    platform: null
-                };
+                this.selections = { theme: null, character: null, voice: null, audience: null, media: null, template_type: null, platform: null };
                 this.templateId = 'XX-XX-XX-XX-XXX';
                 this.currentPhase = 'selection';
                 this.hashtags = [];
@@ -1146,21 +1045,12 @@
             }
 
             attachEventListeners() {
-                // Selection change handlers
                 document.querySelectorAll('.field-select').forEach(select => {
-                    select.addEventListener('change', (e) => {
-                        this.handleSelection(e.target);
-                    });
+                    select.addEventListener('change', (e) => this.handleSelection(e.target));
                 });
-
-                // Content field handlers
                 document.addEventListener('input', (e) => {
-                    if (e.target.classList.contains('field-input')) {
-                        this.updateCharCounter(e.target);
-                    }
+                    if (e.target.classList.contains('field-input')) this.updateCharCounter(e.target);
                 });
-
-                // Hashtag input handler
                 const hashtagInput = document.getElementById('hashtag-input');
                 if (hashtagInput) {
                     hashtagInput.addEventListener('keydown', (e) => {
@@ -1185,11 +1075,8 @@
                     this.selections[field] = null;
                     selectElement.classList.remove('completed');
                 }
-
                 this.updateTemplateId();
                 this.updateButtonStates();
-
-                console.log('Selection updated:', field, this.selections[field]);
             }
 
             async updateTemplateId() {
@@ -1198,12 +1085,10 @@
                 const media = this.selections.media?.code || 'XX';
                 const template = this.selections.template_type?.code || 'XX';
                 
-                // Generate template ID dynamically if Supabase is connected
                 if (window.templateEngineAPI && this.isValidForCreation()) {
                     try {
                         this.templateId = await window.templateEngineAPI.generateTemplateId(this.selections);
                     } catch (error) {
-                        console.warn('Could not generate dynamic template ID, using static:', error);
                         this.templateId = `${theme}-${audience}-${media}-${template}-001`;
                     }
                 } else {
@@ -1211,8 +1096,6 @@
                 }
                 
                 document.getElementById('template-id-display').textContent = this.templateId;
-                
-                // Update breakdown
                 const parts = [
                     this.selections.theme ? this.formatDisplayName(this.selections.theme.value) : 'Theme',
                     this.selections.audience ? this.formatDisplayName(this.selections.audience.value) : 'Audience',
@@ -1220,22 +1103,16 @@
                     this.selections.template_type ? this.formatDisplayName(this.selections.template_type.value) : 'Template',
                     'Auto Number'
                 ];
-                
                 document.getElementById('template-id-breakdown').textContent = parts.join(' - ');
             }
 
             updateButtonStates() {
                 const requiredFields = ['theme', 'audience', 'media', 'template_type'];
                 const allRequired = requiredFields.every(field => this.selections[field]);
-                
                 document.getElementById('search-btn').disabled = !allRequired;
                 document.getElementById('proceed-btn').disabled = !allRequired;
-                
-                // Forward button needs platform selection too
                 const forwardBtn = document.getElementById('forward-btn');
-                if (forwardBtn) {
-                    forwardBtn.disabled = !allRequired || !this.selections.platform;
-                }
+                if (forwardBtn) forwardBtn.disabled = !allRequired || !this.selections.platform;
             }
 
             proceedToCreation() {
@@ -1243,97 +1120,33 @@
                     alert('Please complete all required fields (Theme, Audience, Media, Template Type)');
                     return;
                 }
-
                 this.currentPhase = 'creation';
                 document.getElementById('selection-phase').classList.add('hidden');
                 document.getElementById('creation-phase').classList.add('visible');
-                
-                // Update step indicator
                 document.getElementById('step-select').classList.remove('active');
                 document.getElementById('step-select').classList.add('completed');
                 document.getElementById('step-create').classList.add('active');
-
                 this.setupContentFields();
-                console.log('Proceeding to creation phase');
             }
 
             setupContentFields() {
                 const platform = this.selections.platform?.value;
-                
-                if (platform) {
-                    this.setupPlatformSpecificFields(platform);
-                } else {
-                    this.setupGenericFields();
-                }
+                if (platform) this.setupPlatformSpecificFields(platform);
+                else this.setupGenericFields();
             }
 
             setupPlatformSpecificFields(platform) {
                 const platformConfigs = {
-                    instagram: {
-                        title: { show: true, maxLength: 125, placeholder: "Instagram post title..." },
-                        description: { show: true, maxLength: 2200, placeholder: "Caption for your Instagram post..." },
-                        hashtags: { show: true, maxCount: 30, recommended: 11 },
-                        keywords: { show: false },
-                        cta: { show: true, maxLength: 50 }
-                    },
-                    twitter: {
-                        title: { show: false },
-                        description: { show: true, maxLength: 280, placeholder: "Your tweet content..." },
-                        hashtags: { show: true, maxCount: 2, recommended: 1 },
-                        keywords: { show: false },
-                        cta: { show: true, maxLength: 25 }
-                    },
-                    linkedin: {
-                        title: { show: true, maxLength: 150, placeholder: "Professional headline..." },
-                        description: { show: true, maxLength: 3000, placeholder: "Professional post content..." },
-                        hashtags: { show: true, maxCount: 5, recommended: 3 },
-                        keywords: { show: true },
-                        cta: { show: true, maxLength: 80 }
-                    },
-                    youtube: {
-                        title: { show: true, maxLength: 100, placeholder: "YouTube video title..." },
-                        description: { show: true, maxLength: 5000, placeholder: "Video description..." },
-                        hashtags: { show: true, maxCount: 15, recommended: 5 },
-                        keywords: { show: true },
-                        cta: { show: true, maxLength: 100 }
-                    },
-                    facebook: {
-                        title: { show: true, maxLength: 120, placeholder: "Facebook post title..." },
-                        description: { show: true, maxLength: 2000, placeholder: "Facebook post content..." },
-                        hashtags: { show: true, maxCount: 5, recommended: 2 },
-                        keywords: { show: false },
-                        cta: { show: true, maxLength: 60 }
-                    },
-                    tiktok: {
-                        title: { show: false },
-                        description: { show: true, maxLength: 2200, placeholder: "TikTok caption..." },
-                        hashtags: { show: true, maxCount: 20, recommended: 5 },
-                        keywords: { show: false },
-                        cta: { show: true, maxLength: 30 }
-                    },
-                    telegram: {
-                        title: { show: true, maxLength: 100, placeholder: "Message title..." },
-                        description: { show: true, maxLength: 4096, placeholder: "Telegram message content..." },
-                        hashtags: { show: true, maxCount: 10, recommended: 3 },
-                        keywords: { show: false },
-                        cta: { show: true, maxLength: 50 }
-                    },
-                    pinterest: {
-                        title: { show: true, maxLength: 100, placeholder: "Pin title..." },
-                        description: { show: true, maxLength: 500, placeholder: "Pin description..." },
-                        hashtags: { show: true, maxCount: 20, recommended: 8 },
-                        keywords: { show: true },
-                        cta: { show: true, maxLength: 50 }
-                    },
-                    whatsapp: {
-                        title: { show: false },
-                        description: { show: true, maxLength: 700, placeholder: "WhatsApp status..." },
-                        hashtags: { show: true, maxCount: 5, recommended: 2 },
-                        keywords: { show: false },
-                        cta: { show: true, maxLength: 30 }
-                    }
+                    instagram: { title: { show: true, maxLength: 125, placeholder: "Instagram post title..." }, description: { show: true, maxLength: 2200, placeholder: "Caption for your Instagram post..." }, hashtags: { show: true, maxCount: 30, recommended: 11 }, keywords: { show: false }, cta: { show: true, maxLength: 50 } },
+                    twitter: { title: { show: false }, description: { show: true, maxLength: 280, placeholder: "Your tweet content..." }, hashtags: { show: true, maxCount: 2, recommended: 1 }, keywords: { show: false }, cta: { show: true, maxLength: 25 } },
+                    linkedin: { title: { show: true, maxLength: 150, placeholder: "Professional headline..." }, description: { show: true, maxLength: 3000, placeholder: "Professional post content..." }, hashtags: { show: true, maxCount: 5, recommended: 3 }, keywords: { show: true }, cta: { show: true, maxLength: 80 } },
+                    youtube: { title: { show: true, maxLength: 100, placeholder: "YouTube video title..." }, description: { show: true, maxLength: 5000, placeholder: "Video description..." }, hashtags: { show: true, maxCount: 15, recommended: 5 }, keywords: { show: true }, cta: { show: true, maxLength: 100 } },
+                    facebook: { title: { show: true, maxLength: 120, placeholder: "Facebook post title..." }, description: { show: true, maxLength: 2000, placeholder: "Facebook post content..." }, hashtags: { show: true, maxCount: 5, recommended: 2 }, keywords: { show: false }, cta: { show: true, maxLength: 60 } },
+                    tiktok: { title: { show: false }, description: { show: true, maxLength: 2200, placeholder: "TikTok caption..." }, hashtags: { show: true, maxCount: 20, recommended: 5 }, keywords: { show: false }, cta: { show: true, maxLength: 30 } },
+                    telegram: { title: { show: true, maxLength: 100, placeholder: "Message title..." }, description: { show: true, maxLength: 4096, placeholder: "Telegram message content..." }, hashtags: { show: true, maxCount: 10, recommended: 3 }, keywords: { show: false }, cta: { show: true, maxLength: 50 } },
+                    pinterest: { title: { show: true, maxLength: 100, placeholder: "Pin title..." }, description: { show: true, maxLength: 500, placeholder: "Pin description..." }, hashtags: { show: true, maxCount: 20, recommended: 8 }, keywords: { show: true }, cta: { show: true, maxLength: 50 } },
+                    whatsapp: { title: { show: false }, description: { show: true, maxLength: 700, placeholder: "WhatsApp status..." }, hashtags: { show: true, maxCount: 5, recommended: 2 }, keywords: { show: false }, cta: { show: true, maxLength: 30 } }
                 };
-
                 const config = platformConfigs[platform] || this.getDefaultConfig();
                 this.applyFieldConfiguration(config);
                 this.updatePlatformInfo(platform, config);
@@ -1346,56 +1159,38 @@
             }
 
             getDefaultConfig() {
-                return {
-                    title: { show: true, maxLength: 150, placeholder: "Enter your title..." },
-                    description: { show: true, maxLength: 2200, placeholder: "Enter your content..." },
-                    hashtags: { show: true, maxCount: 30, recommended: 10 },
-                    keywords: { show: true },
-                    cta: { show: true, maxLength: 100 }
-                };
+                return { title: { show: true, maxLength: 150, placeholder: "Enter your title..." }, description: { show: true, maxLength: 2200, placeholder: "Enter your content..." }, hashtags: { show: true, maxCount: 30, recommended: 10 }, keywords: { show: true }, cta: { show: true, maxLength: 100 } };
             }
 
             applyFieldConfiguration(config) {
-                // Title field
                 const titleField = document.getElementById('title-field');
                 const titleInput = document.getElementById('title-input');
                 const titleCounter = document.getElementById('title-counter');
-                
                 if (config.title.show) {
                     titleField.classList.remove('hidden');
                     titleInput.placeholder = config.title.placeholder;
                     titleInput.maxLength = config.title.maxLength;
                     titleCounter.textContent = `0/${config.title.maxLength}`;
-                } else {
-                    titleField.classList.add('hidden');
-                }
+                } else titleField.classList.add('hidden');
 
-                // Description field
                 const descInput = document.getElementById('description-input');
                 const descCounter = document.getElementById('description-counter');
                 descInput.placeholder = config.description.placeholder;
                 descInput.maxLength = config.description.maxLength;
                 descCounter.textContent = `0/${config.description.maxLength}`;
 
-                // Hashtag field
                 const hashtagCounter = document.getElementById('hashtag-counter');
                 hashtagCounter.textContent = `0/${config.hashtags.maxCount}`;
 
-                // Keywords field
                 const keywordsField = document.getElementById('keywords-field');
-                if (config.keywords.show) {
-                    keywordsField.classList.remove('hidden');
-                } else {
-                    keywordsField.classList.add('hidden');
-                }
+                if (config.keywords.show) keywordsField.classList.remove('hidden');
+                else keywordsField.classList.add('hidden');
 
-                // CTA field
                 const ctaInput = document.getElementById('cta-input');
                 const ctaCounter = document.getElementById('cta-counter');
                 ctaInput.maxLength = config.cta.maxLength;
                 ctaCounter.textContent = `0/${config.cta.maxLength}`;
 
-                // Store config for validation
                 this.fieldConfig = config;
             }
 
@@ -1409,38 +1204,18 @@
                     platformDesc.textContent = 'Fill in the content fields based on your selections';
                     platformSpecs.innerHTML = '';
                 } else {
-                    const platformNames = {
-                        instagram: 'Instagram',
-                        twitter: 'Twitter/X', 
-                        linkedin: 'LinkedIn',
-                        youtube: 'YouTube',
-                        facebook: 'Facebook',
-                        tiktok: 'TikTok',
-                        telegram: 'Telegram',
-                        pinterest: 'Pinterest',
-                        whatsapp: 'WhatsApp Business'
-                    };
-
+                    const platformNames = { instagram: 'Instagram', twitter: 'Twitter/X', linkedin: 'LinkedIn', youtube: 'YouTube', facebook: 'Facebook', tiktok: 'TikTok', telegram: 'Telegram', pinterest: 'Pinterest', whatsapp: 'WhatsApp Business' };
                     platformTitle.textContent = `${platformNames[platform] || platform} Template Creation`;
                     platformDesc.textContent = `Optimized for ${platformNames[platform] || platform} specifications and best practices`;
                     
-                    // Create specs display
                     const specs = [
                         { label: 'Description Limit', value: `${config.description.maxLength} characters` },
                         { label: 'Hashtag Limit', value: `${config.hashtags.maxCount} hashtags` },
                         { label: 'Recommended Tags', value: `${config.hashtags.recommended} hashtags` }
                     ];
+                    if (config.title.show) specs.unshift({ label: 'Title Limit', value: `${config.title.maxLength} characters` });
 
-                    if (config.title.show) {
-                        specs.unshift({ label: 'Title Limit', value: `${config.title.maxLength} characters` });
-                    }
-
-                    platformSpecs.innerHTML = specs.map(spec => `
-                        <div class="spec-item">
-                            <div class="spec-label">${spec.label}</div>
-                            <div class="spec-value">${spec.value}</div>
-                        </div>
-                    `).join('');
+                    platformSpecs.innerHTML = specs.map(spec => `<div class="spec-item"><div class="spec-label">${spec.label}</div><div class="spec-value">${spec.value}</div></div>`).join('');
                 }
             }
 
@@ -1449,40 +1224,29 @@
                 const max = parseInt(input.maxLength) || 1000;
                 const counterId = input.id.replace('-input', '-counter');
                 const counter = document.getElementById(counterId);
-                
                 if (counter) {
                     counter.textContent = `${current}/${max}`;
-                    
-                    // Update styling based on usage
-                    if (current > max * 0.9) {
-                        counter.className = 'char-counter error';
-                    } else if (current > max * 0.8) {
-                        counter.className = 'char-counter warning';
-                    } else {
-                        counter.className = 'char-counter';
-                    }
+                    if (current > max * 0.9) counter.className = 'char-counter error';
+                    else if (current > max * 0.8) counter.className = 'char-counter warning';
+                    else counter.className = 'char-counter';
                 }
             }
 
             addHashtag() {
                 const input = document.getElementById('hashtag-input');
                 const tag = input.value.trim().replace(/^#/, '');
-                
                 if (!tag || this.hashtags.includes(tag)) {
                     input.value = '';
                     return;
                 }
-
                 const maxHashtags = this.fieldConfig?.hashtags?.maxCount || 30;
                 if (this.hashtags.length >= maxHashtags) {
                     alert(`Maximum ${maxHashtags} hashtags allowed`);
                     return;
                 }
-
                 this.hashtags.push(tag);
                 this.renderHashtags();
                 input.value = '';
-                
                 const counter = document.getElementById('hashtag-counter');
                 counter.textContent = `${this.hashtags.length}/${maxHashtags}`;
             }
@@ -1490,7 +1254,6 @@
             removeHashtag(tag) {
                 this.hashtags = this.hashtags.filter(t => t !== tag);
                 this.renderHashtags();
-                
                 const maxHashtags = this.fieldConfig?.hashtags?.maxCount || 30;
                 const counter = document.getElementById('hashtag-counter');
                 counter.textContent = `${this.hashtags.length}/${maxHashtags}`;
@@ -1498,20 +1261,13 @@
 
             renderHashtags() {
                 const list = document.getElementById('hashtag-list');
-                list.innerHTML = this.hashtags.map(tag => `
-                    <div class="hashtag-tag">
-                        #${tag}
-                        <button class="remove-hashtag" onclick="builder.removeHashtag('${tag}')">&times;</button>
-                    </div>
-                `).join('');
+                list.innerHTML = this.hashtags.map(tag => `<div class="hashtag-tag">#${tag}<button class="remove-hashtag" onclick="builder.removeHashtag('${tag}')">&times;</button></div>`).join('');
             }
 
             backToSelection() {
                 this.currentPhase = 'selection';
                 document.getElementById('creation-phase').classList.remove('visible');
                 document.getElementById('selection-phase').classList.remove('hidden');
-                
-                // Update step indicator
                 document.getElementById('step-create').classList.remove('active');
                 document.getElementById('step-select').classList.add('active');
                 document.getElementById('step-select').classList.remove('completed');
@@ -1535,7 +1291,6 @@
                     credits: document.getElementById('credits-input')?.value || '',
                     cta: document.getElementById('cta-input')?.value || ''
                 };
-
                 return {
                     templateId: this.templateId,
                     selections: this.selections,
@@ -1547,64 +1302,46 @@
             }
         }
 
-        // Initialize builder
+        // Initialize
         const builder = new TemplateBuilder();
+        window.templateBuilder = builder;
 
         // Global functions
-        function proceedToCreation() {
-            builder.proceedToCreation();
-        }
+        function proceedToCreation() { builder.proceedToCreation(); }
+        function backToSelection() { builder.backToSelection(); }
+        function addHashtag() { builder.addHashtag(); }
 
-        function backToSelection() {
-            builder.backToSelection();
-        }
-
-        function addHashtag() {
-            builder.addHashtag();
-        }
-
-        // Enhanced searchTemplate function with Supabase
         async function searchTemplate() {
             if (!builder.isValidForCreation()) {
                 alert('Please complete all required fields before searching');
                 return;
             }
-
             if (!window.templateEngineAPI) {
                 alert('Supabase is not connected. Please check your configuration.');
                 return;
             }
-
             const searchPattern = builder.templateId.substring(0, builder.templateId.lastIndexOf('-'));
-            console.log('Searching for templates with pattern:', searchPattern);
-            
             try {
-                // Show loading state
                 const searchBtn = document.getElementById('search-btn');
                 const originalText = searchBtn.textContent;
                 searchBtn.textContent = 'Searching...';
                 searchBtn.disabled = true;
-
                 const existingTemplates = await window.templateEngineAPI.searchExistingTemplates(builder.templateId);
-                
                 if (existingTemplates.length > 0) {
                     showTemplateSearchResults(existingTemplates, searchPattern);
                 } else {
                     alert(`No existing templates found for pattern: ${searchPattern}-XXX\n\nYou can proceed to create the first template with this pattern.`);
                 }
-
             } catch (error) {
                 console.error('Search error:', error);
                 alert('Error searching for templates. Please try again.');
             } finally {
-                // Reset button state
                 const searchBtn = document.getElementById('search-btn');
-                searchBtn.textContent = originalText;
+                searchBtn.textContent = 'Search Template';
                 searchBtn.disabled = false;
             }
         }
 
-        // Show search results with action options
         function showTemplateSearchResults(templates, searchPattern) {
             const templateList = templates.map((template, index) => {
                 const templateId = template.template_id || 'Unknown';
@@ -1612,45 +1349,27 @@
                 const dateCreated = new Date(template.created_at).toLocaleDateString();
                 return `${index + 1}. ${templateId} | Status: ${status} | Created: ${dateCreated}`;
             }).join('\n');
-
             const userChoice = prompt(`Found ${templates.length} existing template(s) matching pattern: ${searchPattern}-XXX\n\n${templateList}\n\nChoose your action:\n1 - Edit existing template (enter template number)\n2 - Make a copy of template (enter template number)\n3 - Delete template (enter template number)\n4 - Create new template\n0 - Cancel\n\nEnter your choice:`);
-
-            if (!userChoice || userChoice === '0') {
-                return; // User cancelled
-            }
-
+            if (!userChoice || userChoice === '0') return;
             handleSearchAction(userChoice, templates, searchPattern);
         }
 
-        // Handle user's search action choice
         async function handleSearchAction(choice, templates, searchPattern) {
             const choiceNum = parseInt(choice);
-            
             if (choiceNum === 4) {
-                // Create new template - proceed as normal
                 console.log('User chose to create new template');
                 return;
             }
-            
             if (choiceNum >= 1 && choiceNum <= 3) {
-                // Actions requiring template selection
                 const templateIndex = prompt(`Enter template number (1-${templates.length}) for this action:`);
                 const index = parseInt(templateIndex) - 1;
-                
                 if (index >= 0 && index < templates.length) {
                     const selectedTemplate = templates[index];
                     const templateId = selectedTemplate.template_id;
-                    
                     switch (choiceNum) {
-                        case 1:
-                            await editExistingTemplate(selectedTemplate);
-                            break;
-                        case 2:
-                            await copyExistingTemplate(selectedTemplate, searchPattern);
-                            break;
-                        case 3:
-                            await deleteTemplate(selectedTemplate, templateId);
-                            break;
+                        case 1: await editExistingTemplate(selectedTemplate); break;
+                        case 2: await copyExistingTemplate(selectedTemplate, searchPattern); break;
+                        case 3: await deleteTemplate(selectedTemplate, templateId); break;
                     }
                 } else {
                     alert('Invalid template number selected.');
@@ -1660,19 +1379,11 @@
             }
         }
 
-        // Edit existing template
         async function editExistingTemplate(template) {
             try {
-                console.log('Loading template for editing:', template.id);
-                
                 const templateData = await window.templateEngineAPI.loadTemplate(template.template_id);
-                
-                // Populate form with existing data
                 populateFormWithTemplate(templateData);
-                
-                // Switch to creation phase
                 builder.proceedToCreation();
-                
                 alert('Template loaded for editing. Make your changes and save.');
             } catch (error) {
                 console.error('Error loading template:', error);
@@ -1680,23 +1391,13 @@
             }
         }
 
-        // Copy existing template with new number
         async function copyExistingTemplate(template, searchPattern) {
             try {
-                console.log('Copying template:', template.id);
-                
                 const templateData = await window.templateEngineAPI.loadTemplate(template.template_id);
-                
-                // Generate new template ID
                 const newTemplateId = await window.templateEngineAPI.generateTemplateId(templateData.selections);
                 templateData.templateId = newTemplateId;
-                
-                // Populate form with copied data
                 populateFormWithTemplate(templateData);
-                
-                // Switch to creation phase
                 builder.proceedToCreation();
-                
                 alert(`Template copied! New ID: ${newTemplateId}\nMake any changes needed and save.`);
             } catch (error) {
                 console.error('Error copying template:', error);
@@ -1704,74 +1405,51 @@
             }
         }
 
-        // Delete template
         async function deleteTemplate(template, templateId) {
             const confirmDelete = confirm(`Are you sure you want to DELETE template: ${templateId}?\n\nThis action cannot be undone.\nThe template will be archived and the number will be available for reuse.`);
-            
-            if (!confirmDelete) {
-                return;
-            }
-            
+            if (!confirmDelete) return;
             try {
-                console.log('Deleting template:', templateId);
-                
                 await window.templateEngineAPI.deleteTemplate(templateId);
-                
-                // Mark template number as available for reuse
                 const templateNumber = templateId.split('-').pop();
-                console.log(`Template ${templateId} archived. Number ${templateNumber} available for reuse.`);
-                
                 alert(`Template ${templateId} successfully deleted!\nTemplate has been archived and the number ${templateNumber} is now available for reuse.`);
-                
             } catch (error) {
                 console.error('Error deleting template:', error);
                 alert('Error deleting template. Please try again.');
             }
         }
 
-        // Populate form with template data
         function populateFormWithTemplate(templateData) {
-            // Populate selection fields
             if (templateData.selections.theme) {
                 document.getElementById('theme-select').value = templateData.selections.theme.value;
                 builder.handleSelection(document.getElementById('theme-select'));
             }
-            
             if (templateData.selections.character) {
                 document.getElementById('character-select').value = templateData.selections.character.value;
                 builder.handleSelection(document.getElementById('character-select'));
             }
-            
             if (templateData.selections.voice) {
                 document.getElementById('voice-select').value = templateData.selections.voice.value;
                 builder.handleSelection(document.getElementById('voice-select'));
             }
-            
             if (templateData.selections.audience) {
                 document.getElementById('audience-select').value = templateData.selections.audience.value;
                 builder.handleSelection(document.getElementById('audience-select'));
             }
-            
             if (templateData.selections.media) {
                 document.getElementById('media-select').value = templateData.selections.media.value;
                 builder.handleSelection(document.getElementById('media-select'));
             }
-            
             if (templateData.selections.template_type) {
                 document.getElementById('template-type-select').value = templateData.selections.template_type.value;
                 builder.handleSelection(document.getElementById('template-type-select'));
             }
-            
             if (templateData.selections.platform) {
                 document.getElementById('platform-select').value = templateData.selections.platform.value;
                 builder.handleSelection(document.getElementById('platform-select'));
             }
-            
-            // Update the builder's template ID
             builder.templateId = templateData.templateId;
             document.getElementById('template-id-display').textContent = templateData.templateId;
             
-            // Populate content fields (done in creation phase)
             setTimeout(() => {
                 if (templateData.content.title) {
                     document.getElementById('title-input').value = templateData.content.title;
@@ -1803,19 +1481,7 @@
 
         function previewTemplate() {
             const data = builder.exportSelections();
-            console.log('Template preview:', data);
-            
-            // Create preview modal or alert
-            const previewText = `
-Template ID: ${data.templateId}
-Title: ${data.content.title}
-Description: ${data.content.description}
-Hashtags: ${data.content.hashtags.map(tag => '#' + tag).join(' ')}
-Keywords: ${data.content.keywords}
-CTA: ${data.content.cta}
-Platform: ${builder.selections.platform?.value || 'Generic'}
-            `;
-            
+            const previewText = `Template ID: ${data.templateId}\nTitle: ${data.content.title}\nDescription: ${data.content.description}\nHashtags: ${data.content.hashtags.map(tag => '#' + tag).join(' ')}\nKeywords: ${data.content.keywords}\nCTA: ${data.content.cta}\nPlatform: ${builder.selections.platform?.value || 'Generic'}`;
             alert('Template Preview:\n\n' + previewText);
         }
 
@@ -1824,27 +1490,18 @@ Platform: ${builder.selections.platform?.value || 'Generic'}
                 alert('Supabase is not connected. Cannot save template.');
                 return;
             }
-
             const data = builder.exportSelections();
-            console.log('Saving template:', data);
-            
             try {
-                // Show loading state
                 const saveBtn = document.querySelector('[onclick="saveTemplate()"]');
                 const originalText = saveBtn.textContent;
                 saveBtn.textContent = 'Saving...';
                 saveBtn.disabled = true;
-                
-                // Just save directly - no authentication checks
                 await window.templateEngineAPI.saveTemplate(data);
-                
                 alert(`Template saved successfully!\nID: ${data.templateId}`);
-                
             } catch (error) {
                 console.error('Error saving template:', error);
                 alert(`Error saving template: ${error.message}`);
             } finally {
-                // Reset button state
                 const saveBtn = document.querySelector('[onclick="saveTemplate()"]');
                 saveBtn.textContent = 'Save Template';
                 saveBtn.disabled = false;
@@ -1856,38 +1513,26 @@ Platform: ${builder.selections.platform?.value || 'Generic'}
                 alert('Please select a platform before forwarding to dashboard');
                 return;
             }
-
             if (!window.templateEngineAPI) {
                 alert('Supabase is not connected. Cannot forward template.');
                 return;
             }
-
             const data = builder.exportSelections();
-            console.log('Forwarding to dashboard:', data);
-            
             try {
-                // Show loading state
                 const forwardBtn = document.getElementById('forward-btn');
                 const originalText = forwardBtn.textContent;
                 forwardBtn.textContent = 'Forwarding...';
                 forwardBtn.disabled = true;
-                
-                // First save the template
                 await window.templateEngineAPI.saveTemplate(data);
-                
-                // Then forward it
                 await window.templateEngineAPI.forwardToDashboard(data);
-                
                 alert(`Template forwarded to dashboard!\nID: ${data.templateId}\nPlatform: ${builder.selections.platform.value}`);
-                
             } catch (error) {
                 console.error('Error forwarding template:', error);
                 alert('Error forwarding template to dashboard. Please try again.');
             } finally {
-                // Reset button state
                 const forwardBtn = document.getElementById('forward-btn');
                 forwardBtn.textContent = 'Forward to Dashboard';
-                forwardBtn.disabled = true; // Keep disabled until platform is selected
+                forwardBtn.disabled = true;
             }
         }
 
@@ -1902,48 +1547,28 @@ Platform: ${builder.selections.platform?.value || 'Generic'}
                 alert('Supabase is not connected. Cannot load templates.');
                 return;
             }
-            
             const templateId = prompt('Enter Template ID to load (e.g., NA-EM-IM-SM-001):');
-            
-            if (!templateId) {
-                return;
-            }
-            
+            if (!templateId) return;
             try {
-                // Show loading state
                 const loadBtn = document.querySelector('[onclick="loadTemplate()"]');
                 const originalText = loadBtn.textContent;
                 loadBtn.textContent = 'Loading...';
                 loadBtn.disabled = true;
-                
                 const templateData = await window.templateEngineAPI.loadTemplate(templateId);
-                
                 populateFormWithTemplate(templateData);
-                
                 if (builder.currentPhase === 'selection') {
                     builder.proceedToCreation();
                 }
-                
                 alert(`Template ${templateId} loaded successfully!`);
-                
             } catch (error) {
                 console.error('Error loading template:', error);
                 alert('Template not found or error loading template.');
             } finally {
-                // Reset button state
                 const loadBtn = document.querySelector('[onclick="loadTemplate()"]');
                 loadBtn.textContent = 'Load Template';
                 loadBtn.disabled = false;
             }
         }
-
-        // Function to close connection status
-        function closeConnectionStatus() {
-            document.getElementById('connection-status').classList.add('hidden');
-        }
-
-        // Make builder globally available
-        window.templateBuilder = builder;
     </script>
 </body>
 </html>
