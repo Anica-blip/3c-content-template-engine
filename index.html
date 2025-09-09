@@ -804,11 +804,12 @@
 
         // Update connection status indicator
         const statusElement = document.getElementById('connection-status');
+        const statusText = statusElement.querySelector('span');
         if (connectionStatus === 'connected') {
-            statusElement.textContent = 'Supabase Connected';
+            statusText.textContent = 'Supabase Connected';
             statusElement.className = 'connection-status connected';
         } else {
-            statusElement.textContent = 'Supabase Disconnected';
+            statusText.textContent = 'Supabase Disconnected';
             statusElement.className = 'connection-status disconnected';
         }
 
