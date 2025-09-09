@@ -1857,6 +1857,11 @@ Platform: ${builder.selections.platform?.value || 'Generic'}
             }
         }
 
+        // Function to close connection status
+        function closeConnectionStatus() {
+            document.getElementById('connection-status').classList.add('hidden');
+        }
+
         // Make builder globally available
         window.templateBuilder = builder;
     </script>
