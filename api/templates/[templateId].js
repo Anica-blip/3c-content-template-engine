@@ -1,81 +1,84 @@
 import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
   const { templateId } = req.query;
   
-  // Initialize Supabase client
-  const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_KEY
-  );
+  if (!templateId) {
+    return res.status(400).json({ error: 'Template ID is required' });
+  }
 
-  if (req.method === 'GET') {
-    // Load specific template
-    try {
+  try {
+    const supabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_KEY
+    );
+
+    if (req.method === 'GET') {
       const { data, error } = await supabase
         .from('content_templates')
         .select('*')
         .eq('template_id', templateId)
-        .eq('is_active', true)
+        .eq('status', 'active')
         .single();
-        
-      if (error) throw error;
-      
-      // Transform data to expected format
-      const transformedData = {
-        templateId: data.template_id,
-        selections: {
-          theme: data.theme_code ? { value: data.theme_value, code: data.theme_code } : null,
-          character: data.character_value ? { value: data.character_value, code: null } : null,
-          voice: data.voice_value ? { value: data.voice_value, code: null } : null,
-          audience: data.audience_code ? { value: data.audience_value, code: data.audience_code } : null,
-          media: data.media_code ? { value: data.media_value, code: data.media_code } : null,
-          template_type: data.template_type_code ? { value: data.template_type_value, code: data.template_type_code } : null,
-          platform: data.platform_code ? { value: data.platform_value, code: data.platform_code } : null
-        },
-        content: {
-          title: data.content_title || '',
-          description: data.content_description || '',
-          hashtags: data.content_hashtags || [],
-          keywords: data.content_keywords || '',
-          credits: data.content_credits || '',
-          cta: data.content_cta || ''
-        },
-        timestamp: data.created_at,
-        phase: data.phase || 'creation',
-        status: data.status || 'draft'
-      };
-      
-      res.json({ data: transformedData });
-    } catch (error) {
-      console.error('Load template error:', error);
-      res.status(500).json({ error: error.message });
-    }
-  } 
-  else if (req.method === 'DELETE') {
-    // Delete (archive) template
-    try {
-      const { error } = await supabase
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return res.status(404).json({
+            error: 'Template not found',
+            templateId: templateId
+          });
+        }
+        throw error;
+      }
+
+      res.status(200).json({
+        success: true,
+        data: data
+      });
+
+    } else if (req.method === 'DELETE') {
+      const { data, error } = await supabase
         .from('content_templates')
         .update({ 
-          is_active: false, 
           status: 'deleted',
-          updated_at: new Date().toISOString()
+          deleted_at: new Date().toISOString()
         })
-        .eq('template_id', templateId);
-        
+        .eq('template_id', templateId)
+        .select();
+
       if (error) throw error;
-      
-      res.json({ 
-        message: 'Template archived successfully',
-        templateId 
+
+      if (data.length === 0) {
+        return res.status(404).json({
+          error: 'Template not found',
+          templateId: templateId
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Template deleted successfully',
+        templateId: templateId
       });
-    } catch (error) {
-      console.error('Delete template error:', error);
-      res.status(500).json({ error: error.message });
+
+    } else {
+      res.status(405).json({ error: 'Method not allowed' });
     }
-  }
-  else {
-    res.status(405).json({ error: 'Method not allowed' });
+
+  } catch (error) {
+    console.error('Template operation error:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: error.message
+    });
   }
 }
