@@ -789,237 +789,139 @@
         </div>
     </main>
 
-    <!-- Supabase Integration -->
-    <script type="module">
-        import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js';
-        
-        // Supabase credentials for HTML (public access)
-        const supabaseUrl = 'https://uqyqpwhkzlhqxcqajhkn.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxeXFwd2hremxocXhjcWFqaGtuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA2NzY3MDMsImV4cCI6MjA2NjI1MjcwM30.AE-bdpBIATQCtNWvWo468ZWPwQ-9LWghRO6-BeAzA2U';
+    <!-- API Integration - NO CREDENTIALS IN FRONTEND -->
+    <script>
+        // API Base URL - change this to your deployed API
+        const API_BASE_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3001/api' 
+            : 'https://your-api-domain.com/api';
 
-        // Initialize Supabase client
-        let supabase = null;
-        let connectionStatus = 'disconnected';
-
-        try {
-            supabase = createClient(supabaseUrl, supabaseKey);
-            connectionStatus = 'connected';
-            console.log('Supabase client created successfully');
-        } catch (error) {
-            console.error('Error creating Supabase client:', error);
-            connectionStatus = 'disconnected';
-        }
-
-        // Template Engine API - NO AUTHENTICATION REQUIRED
+        // Template Engine API Client
         const templateEngineAPI = {
+            // Test API connection
+            async testConnection() {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/test-connection`);
+                    const result = await response.json();
+                    return result;
+                } catch (error) {
+                    throw new Error(`API connection failed: ${error.message}`);
+                }
+            },
+
             // Search templates
             async searchExistingTemplates(templateId) {
-                if (!supabase) throw new Error('Supabase not configured');
                 try {
                     const searchPattern = templateId.substring(0, templateId.lastIndexOf('-'));
-                    const { data, error } = await supabase
-                        .from('content_templates')
-                        .select('*')
-                        .like('template_id', `${searchPattern}-%`)
-                        .eq('is_active', true)
-                        .order('created_at', { ascending: false });
-                    if (error) throw error;
-                    return data || [];
+                    const response = await fetch(`${API_BASE_URL}/templates/search/${searchPattern}`);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const result = await response.json();
+                    return result.data || [];
                 } catch (error) {
-                    console.error('Error searching templates:', error);
+                    console.error('Search error:', error);
                     throw error;
                 }
             },
 
             // Load template
             async loadTemplate(templateId) {
-                if (!supabase) throw new Error('Supabase not configured');
                 try {
-                    const { data, error } = await supabase
-                        .from('content_templates')
-                        .select('*')
-                        .eq('template_id', templateId)
-                        .eq('is_active', true)
-                        .single();
-                    if (error) throw error;
-                    return {
-                        templateId: data.template_id,
-                        selections: {
-                            theme: data.theme_code ? { value: data.theme_value, code: data.theme_code } : null,
-                            character: data.character_value ? { value: data.character_value, code: null } : null,
-                            voice: data.voice_value ? { value: data.voice_value, code: null } : null,
-                            audience: data.audience_code ? { value: data.audience_value, code: data.audience_code } : null,
-                            media: data.media_code ? { value: data.media_value, code: data.media_code } : null,
-                            template_type: data.template_type_code ? { value: data.template_type_value, code: data.template_type_code } : null,
-                            platform: data.platform_code ? { value: data.platform_value, code: data.platform_code } : null
-                        },
-                        content: {
-                            title: data.content_title || '',
-                            description: data.content_description || '',
-                            hashtags: data.content_hashtags || [],
-                            keywords: data.content_keywords || '',
-                            credits: data.content_credits || '',
-                            cta: data.content_cta || ''
-                        },
-                        timestamp: data.created_at,
-                        phase: data.phase || 'creation',
-                        status: data.status || 'draft'
-                    };
+                    const response = await fetch(`${API_BASE_URL}/templates/${templateId}`);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const result = await response.json();
+                    return result.data;
                 } catch (error) {
-                    console.error('Error loading template:', error);
+                    console.error('Load template error:', error);
                     throw error;
                 }
             },
 
             // Generate template ID
             async generateTemplateId(selections) {
-                if (!supabase) throw new Error('Supabase not configured');
                 try {
-                    const theme = selections.theme?.code || 'XX';
-                    const audience = selections.audience?.code || 'XX';
-                    const media = selections.media?.code || 'XX';
-                    const template = selections.template_type?.code || 'XX';
-                    const pattern = `${theme}-${audience}-${media}-${template}`;
-                    
-                    const { data, error } = await supabase
-                        .from('content_templates')
-                        .select('template_id')
-                        .like('template_id', `${pattern}-%`)
-                        .eq('is_active', true)
-                        .order('template_id', { ascending: false })
-                        .limit(1);
-                    if (error) throw error;
-                    
-                    let nextNumber = 1;
-                    if (data && data.length > 0) {
-                        const lastId = data[0].template_id;
-                        const lastNumber = parseInt(lastId.split('-').pop());
-                        nextNumber = lastNumber + 1;
-                    }
-                    return `${pattern}-${String(nextNumber).padStart(3, '0')}`;
+                    const response = await fetch(`${API_BASE_URL}/templates/generate-id`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ selections })
+                    });
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const result = await response.json();
+                    return result.templateId;
                 } catch (error) {
-                    console.error('Error generating template ID:', error);
+                    console.error('Generate ID error:', error);
                     throw error;
                 }
             },
 
-            // Save template - PUBLIC ACCESS
+            // Save template
             async saveTemplate(templateData) {
-                if (!supabase) throw new Error('Supabase not configured');
                 try {
-                    const insertData = {
-                        template_id: templateData.templateId,
-                        theme_value: templateData.selections.theme?.value || null,
-                        theme_code: templateData.selections.theme?.code || null,
-                        character_value: templateData.selections.character?.value || null,
-                        voice_value: templateData.selections.voice?.value || null,
-                        audience_value: templateData.selections.audience?.value || null,
-                        audience_code: templateData.selections.audience?.code || null,
-                        media_value: templateData.selections.media?.value || null,
-                        media_code: templateData.selections.media?.code || null,
-                        template_type_value: templateData.selections.template_type?.value || null,
-                        template_type_code: templateData.selections.template_type?.code || null,
-                        platform_value: templateData.selections.platform?.value || null,
-                        platform_code: templateData.selections.platform?.code || null,
-                        content_title: templateData.content.title || null,
-                        content_description: templateData.content.description || null,
-                        content_hashtags: templateData.content.hashtags || [],
-                        content_keywords: templateData.content.keywords || null,
-                        content_credits: templateData.content.credits || null,
-                        content_cta: templateData.content.cta || null,
-                        phase: templateData.phase || 'creation',
-                        status: 'template',
-                        user_id: null,
-                        created_by: null,
-                        is_active: true
-                    };
-                    
-                    // Check if exists
-                    const { data: existing } = await supabase
-                        .from('content_templates')
-                        .select('id')
-                        .eq('template_id', templateData.templateId)
-                        .eq('is_active', true)
-                        .maybeSingle();
-                        
-                    if (existing) {
-                        // Update
-                        const { data, error } = await supabase
-                            .from('content_templates')
-                            .update({ ...insertData, updated_at: new Date().toISOString() })
-                            .eq('id', existing.id)
-                            .select()
-                            .single();
-                        if (error) throw error;
-                        return data;
-                    } else {
-                        // Insert
-                        const { data, error } = await supabase
-                            .from('content_templates')
-                            .insert(insertData)
-                            .select()
-                            .single();
-                        if (error) throw error;
-                        return data;
-                    }
+                    const response = await fetch(`${API_BASE_URL}/templates`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ templateData })
+                    });
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const result = await response.json();
+                    return result.data;
                 } catch (error) {
-                    console.error('Error saving template:', error);
+                    console.error('Save template error:', error);
                     throw error;
                 }
             },
 
             // Delete template
             async deleteTemplate(templateId) {
-                if (!supabase) throw new Error('Supabase not configured');
                 try {
-                    const { error } = await supabase
-                        .from('content_templates')
-                        .update({ is_active: false, status: 'deleted', updated_at: new Date().toISOString() })
-                        .eq('template_id', templateId);
-                    if (error) throw error;
-                    return true;
+                    const response = await fetch(`${API_BASE_URL}/templates/${templateId}`, {
+                        method: 'DELETE'
+                    });
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const result = await response.json();
+                    return result;
                 } catch (error) {
-                    console.error('Error deleting template:', error);
+                    console.error('Delete template error:', error);
                     throw error;
                 }
             },
 
             // Forward to dashboard
             async forwardToDashboard(templateData) {
-                if (!supabase) throw new Error('Supabase not configured');
                 try {
-                    const { error } = await supabase
-                        .from('content_templates')
-                        .update({ status: 'forwarded', updated_at: new Date().toISOString() })
-                        .eq('template_id', templateData.templateId);
-                    if (error) throw error;
-                    return true;
+                    const response = await fetch(`${API_BASE_URL}/templates/${templateData.templateId}/forward`, {
+                        method: 'POST'
+                    });
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const result = await response.json();
+                    return result;
                 } catch (error) {
-                    console.error('Error forwarding to dashboard:', error);
+                    console.error('Forward template error:', error);
                     throw error;
                 }
             }
         };
 
-        // Test connection
+        // Test API connection on load
         async function testConnection() {
             const statusEl = document.getElementById('connection-status');
             try {
-                const { data, error } = await supabase.from('content_templates').select('count').limit(1);
-                if (error) throw error;
-                statusEl.textContent = 'Supabase Ready';
-                statusEl.className = 'connection-status connected';
+                const result = await templateEngineAPI.testConnection();
+                if (result.status === 'connected') {
+                    statusEl.textContent = 'API Connected';
+                    statusEl.className = 'connection-status connected';
+                } else {
+                    throw new Error('API not ready');
+                }
             } catch (error) {
-                statusEl.textContent = `Error: ${error.message}`;
+                statusEl.textContent = `API Error: ${error.message}`;
                 statusEl.className = 'connection-status disconnected';
             }
         }
 
-        // Make globally available
+        // Make API globally available
         window.templateEngineAPI = templateEngineAPI;
-        window.supabase = supabase;
         
-        // Test when ready
+        // Test connection when ready
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', testConnection);
         } else {
@@ -1028,7 +930,7 @@
     </script>
 
     <script>
-        // Template Builder
+        // Template Builder - Same as before, now uses API
         class TemplateBuilder {
             constructor() {
                 this.selections = { theme: null, character: null, voice: null, audience: null, media: null, template_type: null, platform: null };
@@ -1306,7 +1208,7 @@
         const builder = new TemplateBuilder();
         window.templateBuilder = builder;
 
-        // Global functions
+        // Global functions - now use API
         function proceedToCreation() { builder.proceedToCreation(); }
         function backToSelection() { builder.backToSelection(); }
         function addHashtag() { builder.addHashtag(); }
@@ -1317,7 +1219,7 @@
                 return;
             }
             if (!window.templateEngineAPI) {
-                alert('Supabase is not connected. Please check your configuration.');
+                alert('API is not connected. Please check your configuration.');
                 return;
             }
             const searchPattern = builder.templateId.substring(0, builder.templateId.lastIndexOf('-'));
@@ -1487,7 +1389,7 @@
 
         async function saveTemplate() {
             if (!window.templateEngineAPI) {
-                alert('Supabase is not connected. Cannot save template.');
+                alert('API is not connected. Cannot save template.');
                 return;
             }
             const data = builder.exportSelections();
@@ -1514,7 +1416,7 @@
                 return;
             }
             if (!window.templateEngineAPI) {
-                alert('Supabase is not connected. Cannot forward template.');
+                alert('API is not connected. Cannot forward template.');
                 return;
             }
             const data = builder.exportSelections();
@@ -1544,7 +1446,7 @@
 
         async function loadTemplate() {
             if (!window.templateEngineAPI) {
-                alert('Supabase is not connected. Cannot load templates.');
+                alert('API is not connected. Cannot load templates.');
                 return;
             }
             const templateId = prompt('Enter Template ID to load (e.g., NA-EM-IM-SM-001):');
