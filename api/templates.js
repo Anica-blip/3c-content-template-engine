@@ -29,39 +29,27 @@ export default async function handler(req, res) {
       });
     }
 
-    // Prepare data for insertion - match your actual table structure
-    const insertData = {
-      template_id: templateData.templateId,
-      selections: templateData.selections,
-      content: templateData.content,
-      phase: templateData.phase || 'creation',
-      is_valid: templateData.isValid || false,
-      status: 'active',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-
-    console.log('Attempting to insert:', insertData);
-
+    // Insert with required user_id and created_by fields
     const { data, error } = await supabase
       .from('content_templates')
-      .insert([insertData])
+      .insert([{
+        template_id: templateData.templateId,
+        selections: templateData.selections,
+        content: templateData.content,
+        phase: templateData.phase,
+        is_valid: templateData.isValid,
+        status: 'active',
+        user_id: null,        // Required by your table schema
+        created_by: null,     // Required by your table schema  
+        is_active: true
+      }])
       .select();
 
     if (error) {
       console.error('Supabase error:', error);
       return res.status(500).json({
         error: 'Database error',
-        message: error.message,
-        details: error.details,
-        hint: error.hint
-      });
-    }
-
-    if (!data || data.length === 0) {
-      return res.status(500).json({
-        error: 'Insert failed',
-        message: 'No data returned from insert operation'
+        message: error.message
       });
     }
 
@@ -75,8 +63,7 @@ export default async function handler(req, res) {
     console.error('Save template error:', error);
     res.status(500).json({
       error: 'Internal server error',
-      message: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      message: error.message
     });
   }
 }
