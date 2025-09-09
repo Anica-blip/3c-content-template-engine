@@ -510,7 +510,7 @@
             <div class="header-content">
                 <div>
                     <h1 class="app-title">3C Content Template Engine</h1>
-                    <span class="app-subtitle">Create • Customize • Convert</span>
+                    <span class="app-subtitle">Create â€¢ Customize â€¢ Convert</span>
                 </div>
                 <div class="header-buttons">
                     <button class="btn btn-outline" onclick="resetBuilder()">Reset</button>
@@ -778,7 +778,7 @@
 
                         <!-- Creation Actions -->
                         <div class="action-buttons">
-                            <button class="btn btn-outline" onclick="backToSelection()">← Back to Selection</button>
+                            <button class="btn btn-outline" onclick="backToSelection()">â† Back to Selection</button>
                             <button class="btn btn-outline" onclick="previewTemplate()">Preview Template</button>
                             <button class="btn btn-secondary" onclick="saveTemplate()">Save Template</button>
                             <button class="btn btn-success" onclick="forwardToDashboard()" id="forward-btn" disabled>Forward to Dashboard</button>
@@ -789,12 +789,12 @@
         </div>
     </main>
 
-    <!-- API Integration - NO CREDENTIALS IN FRONTEND -->
+    <!-- API Integration - Dynamic URL Detection -->
     <script>
-        // API Base URL - change this to your deployed API
+        // API Base URL - uses your deployed Vercel domain
         const API_BASE_URL = window.location.hostname === 'localhost' 
             ? 'http://localhost:3001/api' 
-            : 'https://your-api-domain.com/api';
+            : 'https://3c-content-template-engine.vercel.app/api';
 
         // Template Engine API Client
         const templateEngineAPI = {
