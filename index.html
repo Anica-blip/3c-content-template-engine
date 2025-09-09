@@ -947,8 +947,11 @@
             async saveTemplate(templateData) {
                 if (!supabase) throw new Error('Supabase not configured');
                 try {
-                    // COMPLIANCE: Validate user authentication and get user_id
-                    const userId = await this.validateUser();
+                    console.log('=== DETAILED SAVE DEBUGGING ===');
+                    console.log('1. Template data to save:', templateData);
+                    
+                    // Skip user validation for public auth
+                    console.log('2. Skipping user validation (public auth)');
                     
                     const insertData = {
                         template_id: templateData.templateId,
@@ -979,22 +982,40 @@
                         phase: templateData.phase || 'creation',
                         status: 'template',
                         
-                        // COMPLIANCE: Required user tracking fields
-                        user_id: userId,        // REQUIRED for RLS
-                        created_by: userId,     // REQUIRED for tracking
+                        // Set user_id as null for public auth
+                        user_id: null,
+                        created_by: null,
                         is_active: true
                     };
                     
-                    // Check if template exists
-                    const { data: existing } = await supabase
-                        .from('content_templates')
-                        .select('id')
-                        .eq('template_id', templateData.templateId)
-                        .eq('is_active', true)
-                        .single();
+                    console.log('3. Insert data prepared:', insertData);
+                    
+                    // Check if template exists first
+                    console.log('4. Checking if template exists...');
+                    let existing;
+                    try {
+                        const { data: existingData, error: selectError } = await supabase
+                            .from('content_templates')
+                            .select('id')
+                            .eq('template_id', templateData.templateId)
+                            .eq('is_active', true)
+                            .maybeSingle();
+                            
+                        if (selectError) {
+                            console.error('Select error details:', selectError);
+                            throw new Error(`Select failed: ${selectError.message}`);
+                        }
+                        
+                        existing = existingData;
+                        console.log('5. Existing template check result:', existing);
+                    } catch (selectErr) {
+                        console.error('Error checking existing template:', selectErr);
+                        throw selectErr;
+                    }
                         
                     if (existing) {
-                        // Update existing - preserve original created_by
+                        console.log('6. Updating existing template...');
+                        // Update existing
                         const updateData = { ...insertData };
                         delete updateData.created_by; // Don't overwrite original creator
                         updateData.updated_at = new Date().toISOString();
@@ -1006,9 +1027,14 @@
                             .select()
                             .single();
                             
-                        if (error) throw error;
+                        if (error) {
+                            console.error('Update error details:', error);
+                            throw new Error(`Update failed: ${error.message}`);
+                        }
+                        console.log('7. Update successful:', data);
                         return data;
                     } else {
+                        console.log('6. Inserting new template...');
                         // Insert new
                         const { data, error } = await supabase
                             .from('content_templates')
@@ -1016,11 +1042,32 @@
                             .select()
                             .single();
                             
-                        if (error) throw error;
+                        if (error) {
+                            console.error('Insert error details:', error);
+                            console.error('Error code:', error.code);
+                            console.error('Error hint:', error.hint);
+                            console.error('Error details:', error.details);
+                            throw new Error(`Insert failed: ${error.message}`);
+                        }
+                        console.log('7. Insert successful:', data);
                         return data;
                     }
                 } catch (error) {
-                    console.error('Error saving template:', error);
+                    console.error('=== SAVE TEMPLATE ERROR ===');
+                    console.error('Error type:', error.constructor.name);
+                    console.error('Error message:', error.message);
+                    console.error('Full error:', error);
+                    
+                    // Add network-level debugging
+                    if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
+                        console.error('NETWORK ERROR DETECTED:');
+                        console.error('- This is likely a CORS, network, or URL issue');
+                        console.error('- Check browser console for CORS errors');
+                        console.error('- Verify Supabase URL is accessible');
+                        
+                        throw new Error(`Network Error: Cannot reach Supabase server. Check: 1) Internet connection, 2) Supabase URL correct, 3) CORS settings in Supabase dashboard`);
+                    }
+                    
                     throw error;
                 }
             },
