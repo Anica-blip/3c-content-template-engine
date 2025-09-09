@@ -1794,13 +1794,62 @@ Platform: ${builder.selections.platform?.value || 'Generic'}
                 saveBtn.textContent = 'Saving...';
                 saveBtn.disabled = true;
                 
+                // ENHANCED DEBUG: Check prerequisites before saving
+                console.log('=== SAVE TEMPLATE DEBUG ===');
+                
+                // Check 1: User authentication
+                const { data: { user }, error: authError } = await supabase.auth.getUser();
+                console.log('User check:', user ? `Authenticated: ${user.id}` : 'NOT AUTHENTICATED');
+                
+                if (!user) {
+                    throw new Error('User must be logged in to save templates. Please authenticate first.');
+                }
+                
+                // Check 2: Test table access
+                console.log('Testing table access...');
+                const { data: testData, error: testError } = await supabase
+                    .from('content_templates')
+                    .select('id')
+                    .limit(1);
+                    
+                if (testError) {
+                    console.error('Table access test failed:', testError);
+                    throw new Error(`Database table error: ${testError.message}`);
+                }
+                
+                console.log('Table access: OK');
+                console.log('Proceeding with save...');
+                
                 await window.templateEngineAPI.saveTemplate(data);
                 
                 alert(`Template saved successfully!\nID: ${data.templateId}`);
                 
             } catch (error) {
-                console.error('Error saving template:', error);
-                alert('Error saving template. Please try again.');
+                console.error('SAVE ERROR DETAILS:', error);
+                
+                // Enhanced error messages
+                let errorMessage = 'Error saving template:\n\n';
+                
+                if (error.message.includes('User must be authenticated')) {
+                    errorMessage += 'AUTHENTICATION REQUIRED\n';
+                    errorMessage += 'Please log in to your Supabase account first.\n\n';
+                    errorMessage += 'You can:\n';
+                    errorMessage += '1. Go to your Supabase dashboard\n';
+                    errorMessage += '2. Log in through the authentication system\n';
+                    errorMessage += '3. Or implement auth in this application';
+                } else if (error.message.includes('relation') && error.message.includes('does not exist')) {
+                    errorMessage += 'DATABASE TABLE MISSING\n';
+                    errorMessage += 'The "content_templates" table does not exist.\n\n';
+                    errorMessage += 'Please create the table with the required schema.';
+                } else if (error.message.includes('permission denied')) {
+                    errorMessage += 'PERMISSION DENIED\n';
+                    errorMessage += 'RLS policies are blocking this operation.\n\n';
+                    errorMessage += 'Please check your Row Level Security policies.';
+                } else {
+                    errorMessage += error.message || 'Unknown error occurred';
+                }
+                
+                alert(errorMessage);
             } finally {
                 // Reset button state
                 const saveBtn = document.querySelector('[onclick="saveTemplate()"]');
