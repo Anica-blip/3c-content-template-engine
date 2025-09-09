@@ -21,6 +21,7 @@
             --success-100: #f0fdf4;
             --warning-500: #f59e0b;
             --error-500: #ef4444;
+            --error-100: #fee2e2;
             --space-2: 0.5rem;
             --space-3: 0.75rem;
             --space-4: 1rem;
@@ -59,6 +60,15 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            flex-wrap: wrap;
+            gap: var(--space-4);
+        }
+
+        .header-buttons {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            flex-wrap: wrap;
         }
 
         .app-title {
@@ -454,6 +464,29 @@
             color: white;
         }
 
+        /* Connection status indicator - now inline with header buttons */
+        .connection-status {
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-left: 1rem;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .connection-status.connected {
+            background: var(--success-100);
+            color: var(--success-500);
+            border: 1px solid var(--success-500);
+        }
+
+        .connection-status.disconnected {
+            background: var(--error-100);
+            color: var(--error-500);
+            border: 1px solid var(--error-500);
+        }
+
         @media (max-width: 768px) {
             .choice-grid {
                 grid-template-columns: 1fr;
@@ -468,30 +501,6 @@
                 gap: var(--space-4);
             }
         }
-
-        /* Connection status indicator */
-        .connection-status {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            padding: 8px 12px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 500;
-            z-index: 1000;
-        }
-
-        .connection-status.connected {
-            background: var(--success-100);
-            color: var(--success-500);
-            border: 1px solid var(--success-500);
-        }
-
-        .connection-status.disconnected {
-            background: var(--error-100);
-            color: var(--error-500);
-            border: 1px solid var(--error-500);
-        }
     </style>
 </head>
 <body>
@@ -503,11 +512,10 @@
                     <h1 class="app-title">3C Content Template Engine</h1>
                     <span class="app-subtitle">Create • Customize • Convert</span>
                 </div>
-                <div>
+                <div class="header-buttons">
                     <button class="btn btn-outline" onclick="resetBuilder()">Reset</button>
                     <button class="btn btn-outline" onclick="loadTemplate()">Load Template</button>
-                    <!-- Connection Status moved here -->
-                    <div class="connection-status" id="connection-status" style="margin-left: 1rem;">Checking connection...</div>
+                    <div class="connection-status" id="connection-status">Checking connection...</div>
                 </div>
             </div>
         </div>
@@ -785,11 +793,12 @@
     <script type="module">
         import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js';
         
-        // Your actual Supabase credentials
+        // Supabase credentials - Embedded directly for HTML (no .env support)
+        // These are your actual production Supabase credentials
         const supabaseUrl = 'https://uqyqpwhkzlhqxcqajhkn.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxeXFwd2hremxocXhjcWFqaGtuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA2NzY3MDMsImV4cCI6MjA2NjI1MjcwM30.AE-bdpBIATQCtNWvWo468ZWPwQ-9LWghRO6-BeAzA2U';
 
-        // Initialize Supabase client
+        // Initialize Supabase client with validation
         let supabase = null;
         let connectionStatus = 'disconnected';
 
@@ -804,21 +813,33 @@
 
         // Update connection status indicator
         const statusElement = document.getElementById('connection-status');
-        const statusText = statusElement.querySelector('span');
         if (connectionStatus === 'connected') {
-            statusText.textContent = 'Supabase Connected';
+            statusElement.textContent = 'Supabase Connected';
             statusElement.className = 'connection-status connected';
         } else {
-            statusText.textContent = 'Supabase Disconnected';
+            statusElement.textContent = 'Supabase Disconnected';
             statusElement.className = 'connection-status disconnected';
         }
 
         // Template Engine API
         const templateEngineAPI = {
+            // Validate user authentication (COMPLIANCE REQUIREMENT)
+            async validateUser() {
+                if (!supabase) throw new Error('Supabase not configured');
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user?.id) {
+                    throw new Error('User must be authenticated for database operations');
+                }
+                return user.id;
+            },
+
             // Search for existing templates by pattern
             async searchExistingTemplates(templateId) {
                 if (!supabase) throw new Error('Supabase not configured');
                 try {
+                    // COMPLIANCE: Validate user authentication
+                    await this.validateUser();
+                    
                     const searchPattern = templateId.substring(0, templateId.lastIndexOf('-'));
                     console.log('Searching for pattern:', searchPattern);
                     
@@ -841,6 +862,9 @@
             async loadTemplate(templateId) {
                 if (!supabase) throw new Error('Supabase not configured');
                 try {
+                    // COMPLIANCE: Validate user authentication
+                    await this.validateUser();
+                    
                     const { data, error } = await supabase
                         .from('content_templates')
                         .select('*')
@@ -884,6 +908,9 @@
             async generateTemplateId(selections) {
                 if (!supabase) throw new Error('Supabase not configured');
                 try {
+                    // COMPLIANCE: Validate user authentication
+                    await this.validateUser();
+                    
                     const theme = selections.theme?.code || 'XX';
                     const audience = selections.audience?.code || 'XX';
                     const media = selections.media?.code || 'XX';
@@ -920,8 +947,8 @@
             async saveTemplate(templateData) {
                 if (!supabase) throw new Error('Supabase not configured');
                 try {
-                    const { data: { user } } = await supabase.auth.getUser();
-                    const userId = user?.id || null;
+                    // COMPLIANCE: Validate user authentication and get user_id
+                    const userId = await this.validateUser();
                     
                     const insertData = {
                         template_id: templateData.templateId,
@@ -952,9 +979,9 @@
                         phase: templateData.phase || 'creation',
                         status: 'template',
                         
-                        // Required user tracking
-                        user_id: userId,
-                        created_by: userId,
+                        // COMPLIANCE: Required user tracking fields
+                        user_id: userId,        // REQUIRED for RLS
+                        created_by: userId,     // REQUIRED for tracking
                         is_active: true
                     };
                     
@@ -967,10 +994,14 @@
                         .single();
                         
                     if (existing) {
-                        // Update existing
+                        // Update existing - preserve original created_by
+                        const updateData = { ...insertData };
+                        delete updateData.created_by; // Don't overwrite original creator
+                        updateData.updated_at = new Date().toISOString();
+                        
                         const { data, error } = await supabase
                             .from('content_templates')
-                            .update(insertData)
+                            .update(updateData)
                             .eq('id', existing.id)
                             .select()
                             .single();
@@ -998,6 +1029,9 @@
             async deleteTemplate(templateId) {
                 if (!supabase) throw new Error('Supabase not configured');
                 try {
+                    // COMPLIANCE: Validate user authentication
+                    await this.validateUser();
+                    
                     const { error } = await supabase
                         .from('content_templates')
                         .update({ 
@@ -1019,6 +1053,9 @@
             async forwardToDashboard(templateData) {
                 if (!supabase) throw new Error('Supabase not configured');
                 try {
+                    // COMPLIANCE: Validate user authentication
+                    await this.validateUser();
+                    
                     // Update status to forwarded
                     const { error } = await supabase
                         .from('content_templates')
