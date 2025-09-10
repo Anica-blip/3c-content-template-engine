@@ -28,7 +28,7 @@ export default async function handler(req, res) {
 
     const { data, error } = await supabase
       .from('content_templates')
-      .select('template_id, status, created_at, updated_at, theme_value, platform_value')
+      .select('template_id, content_title, status, created_at, updated_at, theme_value, platform_value')
       .like('template_id', `${pattern}-%`)
       .eq('is_active', true)
       .order('created_at', { ascending: false });
@@ -37,6 +37,7 @@ export default async function handler(req, res) {
 
     const matchingTemplates = data.map(template => ({
       template_id: template.template_id,
+      content_title: template.content_title,
       status: template.status,
       created_at: template.created_at,
       updated_at: template.updated_at,
