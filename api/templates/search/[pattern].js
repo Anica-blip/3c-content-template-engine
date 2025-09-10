@@ -28,9 +28,9 @@ export default async function handler(req, res) {
 
     const { data, error } = await supabase
       .from('content_templates')
-      .select('template_id, status, created_at, updated_at, selections')
+      .select('template_id, status, created_at, updated_at, theme_value, platform_value')
       .like('template_id', `${pattern}-%`)
-      .eq('status', 'active')
+      .eq('is_active', true)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -40,8 +40,8 @@ export default async function handler(req, res) {
       status: template.status,
       created_at: template.created_at,
       updated_at: template.updated_at,
-      theme: template.selections?.theme?.value,
-      platform: template.selections?.platform?.value
+      theme: template.theme_value,
+      platform: template.platform_value
     }));
 
     res.status(200).json({
