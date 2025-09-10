@@ -26,7 +26,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Template ID is required' });
     }
 
-    // Get template first
+    // Get template data (but don't modify the original template)
     const { data: template, error: fetchError } = await supabase
       .from('content_templates')
       .select('*')
@@ -50,20 +50,11 @@ export default async function handler(req, res) {
       });
     }
 
-    // Update template status to forwarded
-    const { error: updateError } = await supabase
-      .from('content_templates')
-      .update({ 
-        status: 'forwarded',
-        forwarded_at: new Date().toISOString()
-      })
-      .eq('template_id', templateId);
-
-    if (updateError) throw updateError;
-
-    // Insert into pending_content_library for Template Library
+    // Create a COPY in pending_content_library for Template Library
+    // Original template remains unchanged and reusable
     const forwardData = {
-      template_id: template.template_id,
+      template_id: template.template_id + '_' + Date.now(), // Unique ID for the copy
+      original_template_id: template.template_id, // Reference to original
       content_title: template.content?.title || template.content_title || 'Untitled Template',
       character_profile: template.selections?.character?.value || null,
       theme: template.selections?.theme?.value || null,
@@ -96,20 +87,20 @@ export default async function handler(req, res) {
     if (insertError) {
       console.error('Insert error:', insertError);
       return res.status(500).json({ 
-        error: 'Failed to forward template to Template Library',
+        error: 'Failed to forward template copy to Template Library',
         details: insertError.message 
       });
     }
 
     res.status(200).json({
       success: true,
-      message: 'Template forwarded to Template Library successfully',
+      message: 'Template copy forwarded to Template Library successfully',
       data: {
-        templateId: templateId,
+        originalTemplateId: template.template_id,
+        forwardedCopyId: insertData.template_id,
         platform: template.selections.platform.value,
         forwardedAt: new Date().toISOString(),
-        status: 'forwarded',
-        libraryEntry: insertData
+        note: 'Original template remains unchanged and reusable'
       }
     });
 
