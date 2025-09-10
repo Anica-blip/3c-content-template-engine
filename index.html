@@ -510,7 +510,7 @@
             <div class="header-content">
                 <div>
                     <h1 class="app-title">3C Content Template Engine</h1>
-                    <span class="app-subtitle">Create â€¢ Customize â€¢ Convert</span>
+                    <span class="app-subtitle">Create • Customize • Convert</span>
                 </div>
                 <div class="header-buttons">
                     <button class="btn btn-outline" onclick="resetBuilder()">Reset</button>
@@ -778,7 +778,7 @@
 
                         <!-- Creation Actions -->
                         <div class="action-buttons">
-                            <button class="btn btn-outline" onclick="backToSelection()">â† Back to Selection</button>
+                            <button class="btn btn-outline" onclick="backToSelection()">← Back to Selection</button>
                             <button class="btn btn-outline" onclick="previewTemplate()">Preview Template</button>
                             <button class="btn btn-secondary" onclick="saveTemplate()">Save Template</button>
                             <button class="btn btn-success" onclick="forwardToDashboard()" id="forward-btn" disabled>Forward to Dashboard</button>
@@ -789,7 +789,7 @@
         </div>
     </main>
 
-    <!-- API Integration - Dynamic URL Detection -->
+    <!-- API Integration - Vercel Backend -->
     <script>
         // API Base URL - uses your deployed Vercel domain
         const API_BASE_URL = window.location.hostname === 'localhost' 
@@ -823,13 +823,42 @@
                 }
             },
 
-            // Load template
+            // Load template - Fixed
             async loadTemplate(templateId) {
                 try {
                     const response = await fetch(`${API_BASE_URL}/templates/${templateId}`);
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    if (!response.ok) {
+                        if (response.status === 404) {
+                            throw new Error('Template not found');
+                        }
+                        throw new Error(`HTTP ${response.status}`);
+                    }
                     const result = await response.json();
-                    return result.data;
+                    
+                    // Convert API response back to frontend format
+                    return {
+                        templateId: result.data.template_id,
+                        selections: {
+                            theme: result.data.theme_code ? { value: result.data.theme_value, code: result.data.theme_code } : null,
+                            character: result.data.character_value ? { value: result.data.character_value, code: null } : null,
+                            voice: result.data.voice_value ? { value: result.data.voice_value, code: null } : null,
+                            audience: result.data.audience_code ? { value: result.data.audience_value, code: result.data.audience_code } : null,
+                            media: result.data.media_code ? { value: result.data.media_value, code: result.data.media_code } : null,
+                            template_type: result.data.template_type_code ? { value: result.data.template_type_value, code: result.data.template_type_code } : null,
+                            platform: result.data.platform_code ? { value: result.data.platform_value, code: result.data.platform_code } : null
+                        },
+                        content: {
+                            title: result.data.content_title || '',
+                            description: result.data.content_description || '',
+                            hashtags: result.data.content_hashtags || [],
+                            keywords: result.data.content_keywords || '',
+                            credits: result.data.content_credits || '',
+                            cta: result.data.content_cta || ''
+                        },
+                        timestamp: result.data.created_at,
+                        phase: result.data.phase || 'creation',
+                        status: result.data.status || 'template'
+                    };
                 } catch (error) {
                     console.error('Load template error:', error);
                     throw error;
@@ -1438,6 +1467,7 @@
             }
         }
 
+        // Fixed Reset Builder - Full page refresh
         function resetBuilder() {
             if (confirm('Reset all selections and content? This cannot be undone.')) {
                 location.reload();
