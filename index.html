@@ -491,6 +491,15 @@
             .choice-grid {
                 grid-template-columns: 1fr;
             }
+
+            backToSelection() {
+                this.currentPhase = 'selection';
+                document.getElementById('creation-phase').classList.remove('visible');
+                document.getElementById('selection-phase').classList.remove('hidden');
+                document.getElementById('step-create').classList.remove('active');
+                document.getElementById('step-select').classList.add('active');
+                document.getElementById('step-select').classList.remove('completed');
+            }
             
             .action-buttons {
                 flex-direction: column;
