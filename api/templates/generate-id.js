@@ -38,7 +38,7 @@ export default async function handler(req, res) {
       .from('content_templates')
       .select('template_id')
       .like('template_id', `${basePattern}-%`)
-      .eq('status', 'active');
+      .eq('is_active', true);
 
     if (error) throw error;
 
