@@ -620,7 +620,7 @@
 
         .recommended-badge {
             background: var(--success-100);
-            color: var(--success-700);
+            color: #000000;
             font-size: 0.7rem;
             padding: 2px 6px;
             border-radius: 10px;
@@ -822,9 +822,9 @@
                         <!-- Template ID Display -->
                         <div class="template-id-display">
                             <div class="template-id-label">Auto-Generated Template ID</div>
-                            <div class="template-id-value" id="template-id-display">XX-XX-XX-XX-XXX</div>
+                            <div class="template-id-value" id="template-id-display">XX-XX-XX-XX-XX-XX-XXX</div>
                             <div class="template-id-breakdown" id="template-id-breakdown">
-                                Theme - Audience - Media - Template - Auto Number
+                                Theme - Audience - Media - Template - Character - Voice - Auto Number
                             </div>
                         </div>
 
@@ -1104,7 +1104,7 @@
         class TemplateBuilder {
             constructor() {
                 this.selections = { theme: null, character: null, voice: null, audience: null, media: null, template_type: null, platform: null };
-                this.templateId = 'XX-XX-XX-XX-XXX';
+                this.templateId = 'XX-XX-XX-XX-XX-XX-XXX';
                 this.currentPhase = 'selection';
                 this.hashtags = [];
                 this.init();
@@ -1157,10 +1157,14 @@
                 const media = this.selections.media?.code || 'XX';
                 const template = this.selections.template_type?.code || 'XX';
                 
+                // NEW: Add character and voice codes
+                const character = this.getCharacterCode(this.selections.character?.value) || 'XX';
+                const voice = this.getVoiceCode(this.selections.voice?.value) || 'XX';
+                
                 if (window.templateEngineAPI && this.isValidForCreation()) {
                     try {
-                        // Check for existing templates with same pattern
-                        const basePattern = `${theme}-${audience}-${media}-${template}`;
+                        // Check for existing templates with same pattern (including character + voice)
+                        const basePattern = `${theme}-${audience}-${media}-${template}-${character}-${voice}`;
                         console.log('Checking for existing templates with pattern:', basePattern);
                         
                         // Search by base pattern, not full template ID
@@ -1179,10 +1183,10 @@
                         this.templateId = await window.templateEngineAPI.generateTemplateId(this.selections);
                     } catch (error) {
                         console.error('Error checking existing templates:', error);
-                        this.templateId = `${theme}-${audience}-${media}-${template}-001`;
+                        this.templateId = `${theme}-${audience}-${media}-${template}-${character}-${voice}-001`;
                     }
                 } else {
-                    this.templateId = `${theme}-${audience}-${media}-${template}-001`;
+                    this.templateId = `${theme}-${audience}-${media}-${template}-${character}-${voice}-001`;
                 }
                 
                 document.getElementById('template-id-display').textContent = this.templateId;
@@ -1191,9 +1195,30 @@
                     this.selections.audience ? this.formatDisplayName(this.selections.audience.value) : 'Audience',
                     this.selections.media ? this.formatDisplayName(this.selections.media.value) : 'Media', 
                     this.selections.template_type ? this.formatDisplayName(this.selections.template_type.value) : 'Template',
+                    this.selections.character ? this.formatDisplayName(this.selections.character.value) : 'Character',
+                    this.selections.voice ? this.formatDisplayName(this.selections.voice.value) : 'Voice',
                     'Auto Number'
                 ];
                 document.getElementById('template-id-breakdown').textContent = parts.join(' - ');
+            }
+
+            getCharacterCode(character) {
+                const codes = {
+                    'anica': 'AN',
+                    'caelum': 'CA', 
+                    'aurion': 'AU'
+                };
+                return codes[character] || null;
+            }
+
+            getVoiceCode(voice) {
+                const codes = {
+                    'casual': 'CS',
+                    'friendly': 'FR',
+                    'professional': 'PR',
+                    'creative': 'CR'
+                };
+                return codes[voice] || null;
             }
 
             showExistingTemplatePopup(existingTemplates, basePattern) {
@@ -1201,7 +1226,7 @@
                 const templateId = latestTemplate.template_id;
                 const dateCreated = new Date(latestTemplate.created_at).toLocaleDateString();
                 
-                // Create modal HTML
+                // Create modal HTML with proper onclick handlers
                 const modalHTML = `
                     <div class="modal-overlay" id="template-modal">
                         <div class="modal-content">
@@ -1221,7 +1246,7 @@
                                 </div>
                                 
                                 <div class="modal-actions">
-                                    <button class="modal-btn modal-btn-primary" onclick="builder.useExistingTemplate('${templateId}')">
+                                    <button class="modal-btn modal-btn-primary" id="edit-template-btn">
                                         <span class="btn-icon">✏️</span>
                                         <div class="btn-text">
                                             <div>Edit Existing Template</div>
@@ -1230,7 +1255,7 @@
                                         <span class="recommended-badge">RECOMMENDED</span>
                                     </button>
                                     
-                                    <button class="modal-btn modal-btn-secondary" onclick="builder.createNewVersion('${basePattern}')">
+                                    <button class="modal-btn modal-btn-secondary" id="create-new-btn">
                                         <span class="btn-icon">📝</span>
                                         <div class="btn-text">
                                             <div>Create New Version</div>
@@ -1238,7 +1263,7 @@
                                         </div>
                                     </button>
                                     
-                                    <button class="modal-btn modal-btn-outline" onclick="builder.closeModal()">
+                                    <button class="modal-btn modal-btn-outline" id="cancel-modal-btn">
                                         <span class="btn-icon">❌</span>
                                         <div class="btn-text">
                                             <div>Cancel</div>
@@ -1254,6 +1279,19 @@
                 // Add modal to DOM
                 document.body.insertAdjacentHTML('beforeend', modalHTML);
                 
+                // Add event listeners with proper scope
+                document.getElementById('edit-template-btn').addEventListener('click', () => {
+                    this.useExistingTemplate(templateId);
+                });
+                
+                document.getElementById('create-new-btn').addEventListener('click', () => {
+                    this.createNewVersion(basePattern);
+                });
+                
+                document.getElementById('cancel-modal-btn').addEventListener('click', () => {
+                    this.closeModal();
+                });
+                
                 // Add click outside to close
                 document.getElementById('template-modal').addEventListener('click', (e) => {
                     if (e.target.id === 'template-modal') {
@@ -1267,10 +1305,17 @@
                 if (modal) {
                     modal.remove();
                 }
-                // Reset template ID display
-                this.templateId = 'XX-XX-XX-XX-XXX';
+                // Reset template ID display to show current pattern
+                const theme = this.selections.theme?.code || 'XX';
+                const audience = this.selections.audience?.code || 'XX';
+                const media = this.selections.media?.code || 'XX';
+                const template = this.selections.template_type?.code || 'XX';
+                const character = this.getCharacterCode(this.selections.character?.value) || 'XX';
+                const voice = this.getVoiceCode(this.selections.voice?.value) || 'XX';
+                
+                this.templateId = `${theme}-${audience}-${media}-${template}-${character}-${voice}-XXX`;
                 document.getElementById('template-id-display').textContent = this.templateId;
-                document.getElementById('template-id-breakdown').textContent = 'Theme - Audience - Media - Template - Auto Number';
+                document.getElementById('template-id-breakdown').textContent = 'Theme - Audience - Media - Template - Character - Voice - Auto Number';
             }
 
             async useExistingTemplate(templateId) {
@@ -1279,7 +1324,7 @@
                     const templateData = await window.templateEngineAPI.loadTemplate(templateId);
                     populateFormWithTemplate(templateData);
                     this.proceedToCreation();
-                    alert(`✅ Existing template loaded successfully!\n\nID: ${templateId}\n\nYou can now edit the content and save your changes.`);
+                    // Remove the alert popup and just proceed smoothly
                 } catch (error) {
                     console.error('Error loading existing template:', error);
                     alert('Error loading existing template. Creating new template instead.');
@@ -1297,6 +1342,8 @@
                         this.selections.audience ? this.formatDisplayName(this.selections.audience.value) : 'Audience',
                         this.selections.media ? this.formatDisplayName(this.selections.media.value) : 'Media', 
                         this.selections.template_type ? this.formatDisplayName(this.selections.template_type.value) : 'Template',
+                        this.selections.character ? this.formatDisplayName(this.selections.character.value) : 'Character',
+                        this.selections.voice ? this.formatDisplayName(this.selections.voice.value) : 'Voice',
                         'Auto Number'
                     ];
                     document.getElementById('template-id-breakdown').textContent = parts.join(' - ');
@@ -1305,7 +1352,9 @@
                     const audience = this.selections.audience?.code || 'XX';
                     const media = this.selections.media?.code || 'XX';
                     const template = this.selections.template_type?.code || 'XX';
-                    this.templateId = `${theme}-${audience}-${media}-${template}-002`;
+                    const character = this.getCharacterCode(this.selections.character?.value) || 'XX';
+                    const voice = this.getVoiceCode(this.selections.voice?.value) || 'XX';
+                    this.templateId = `${theme}-${audience}-${media}-${template}-${character}-${voice}-002`;
                     document.getElementById('template-id-display').textContent = this.templateId;
                 }
             }
@@ -1752,7 +1801,7 @@
                 alert('API is not connected. Cannot load templates.');
                 return;
             }
-            const templateId = prompt('Enter Template ID to load (e.g., NA-EM-IM-SM-001):');
+            const templateId = prompt('Enter Template ID to load (e.g., NA-EM-VD-VM-AN-FR-001):');
             if (!templateId) return;
             try {
                 const loadBtn = document.querySelector('[onclick="loadTemplate()"]');
