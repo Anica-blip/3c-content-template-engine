@@ -51,29 +51,66 @@ export default async function handler(req, res) {
     }
 
     // Update template status to forwarded
-    const { data, error } = await supabase
+    const { error: updateError } = await supabase
       .from('content_templates')
       .update({ 
         status: 'forwarded',
         forwarded_at: new Date().toISOString()
       })
-      .eq('template_id', templateId)
-      .select();
+      .eq('template_id', templateId);
 
-    if (error) throw error;
+    if (updateError) throw updateError;
 
+    // Insert into pending_content_library for Template Library
     const forwardData = {
-      templateId: templateId,
-      platform: template.selections.platform.value,
-      content: template.content,
-      forwardedAt: new Date().toISOString(),
-      status: 'forwarded'
+      template_id: template.template_id,
+      content_title: template.content?.title || template.content_title || 'Untitled Template',
+      character_profile: template.selections?.character?.value || null,
+      theme: template.selections?.theme?.value || null,
+      audience: template.selections?.audience?.value || null,
+      media_type: template.selections?.media?.value || null,
+      template_type: template.selections?.template_type?.value || null,
+      platform: template.selections?.platform?.value || null,
+      title: template.content?.title || template.content_title || '',
+      description: template.content?.description || template.content_description || '',
+      hashtags: template.content?.hashtags || template.content_hashtags || [],
+      keywords: template.content?.keywords || template.content_keywords || '',
+      cta: template.content?.cta || template.content_cta || '',
+      media_files: [],
+      selected_platforms: template.selections?.platform ? [template.selections.platform.value] : [],
+      // Template Library specific fields
+      status: 'pending',
+      is_from_template: true,
+      is_active: true,
+      created_at: new Date().toISOString(),
+      user_id: 'system', // Replace with actual user ID if available
+      created_by: 'content_template_engine'
     };
+
+    const { data: insertData, error: insertError } = await supabase
+      .from('pending_content_library')
+      .insert(forwardData)
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error('Insert error:', insertError);
+      return res.status(500).json({ 
+        error: 'Failed to forward template to Template Library',
+        details: insertError.message 
+      });
+    }
 
     res.status(200).json({
       success: true,
-      message: 'Template forwarded to dashboard successfully',
-      data: forwardData
+      message: 'Template forwarded to Template Library successfully',
+      data: {
+        templateId: templateId,
+        platform: template.selections.platform.value,
+        forwardedAt: new Date().toISOString(),
+        status: 'forwarded',
+        libraryEntry: insertData
+      }
     });
 
   } catch (error) {
