@@ -961,7 +961,7 @@
             async searchExistingTemplates(templateId) {
                 try {
                     const searchPattern = templateId.substring(0, templateId.lastIndexOf('-'));
-                    const response = await fetch(`${API_BASE_URL}/templates/search/${searchPattern}`);
+                    const response = await fetch(`${API_BASE_URL}/templates/search/${searchPattern}?fields=template_id,content_title,created_at,status`);
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
                     const result = await response.json();
                     return result.data || [];
