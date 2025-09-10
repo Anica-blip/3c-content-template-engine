@@ -18,6 +18,7 @@
             --gray-700: #334155;
             --gray-900: #0f172a;
             --success-500: #10b981;
+            --success-600: #059669;
             --success-100: #f0fdf4;
             --warning-500: #f59e0b;
             --error-500: #ef4444;
@@ -487,18 +488,149 @@
             border: 1px solid var(--error-500);
         }
 
+        /* Modal popup styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            background: var(--primary-600);
+            color: white;
+            padding: var(--space-4) var(--space-6);
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            text-align: center;
+        }
+
+        .modal-header h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: var(--space-2);
+        }
+
+        .modal-body {
+            padding: var(--space-6);
+        }
+
+        .template-info {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            padding: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+
+        .template-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-2);
+            font-size: 0.875rem;
+        }
+
+        .template-id {
+            font-family: monospace;
+            font-weight: 600;
+            color: var(--primary-600);
+        }
+
+        .template-date {
+            color: var(--gray-500);
+        }
+
+        .modal-actions {
+            display: grid;
+            gap: var(--space-3);
+        }
+
+        .modal-btn {
+            padding: var(--space-3) var(--space-4);
+            border-radius: var(--radius-md);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        .modal-btn-primary {
+            background: var(--success-500);
+            color: white;
+            border: 2px solid var(--success-500);
+        }
+
+        .modal-btn-primary:hover {
+            background: var(--success-600);
+        }
+
+        .modal-btn-secondary {
+            background: var(--primary-50);
+            color: var(--primary-700);
+            border: 2px solid var(--primary-200);
+        }
+
+        .modal-btn-secondary:hover {
+            background: var(--primary-100);
+        }
+
+        .modal-btn-outline {
+            background: white;
+            color: var(--gray-700);
+            border: 2px solid var(--gray-300);
+        }
+
+        .modal-btn-outline:hover {
+            background: var(--gray-50);
+        }
+
+        .btn-icon {
+            font-size: 1.2rem;
+        }
+
+        .btn-text {
+            flex: 1;
+        }
+
+        .btn-description {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            margin-top: 2px;
+        }
+
+        .recommended-badge {
+            background: var(--success-100);
+            color: var(--success-700);
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 600;
+            margin-left: auto;
+        }
+
         @media (max-width: 768px) {
             .choice-grid {
                 grid-template-columns: 1fr;
-            }
-
-            backToSelection() {
-                this.currentPhase = 'selection';
-                document.getElementById('creation-phase').classList.remove('visible');
-                document.getElementById('selection-phase').classList.remove('hidden');
-                document.getElementById('step-create').classList.remove('active');
-                document.getElementById('step-select').classList.add('active');
-                document.getElementById('step-select').classList.remove('completed');
             }
             
             .action-buttons {
@@ -1027,8 +1159,26 @@
                 
                 if (window.templateEngineAPI && this.isValidForCreation()) {
                     try {
+                        // Check for existing templates with same pattern
+                        const basePattern = `${theme}-${audience}-${media}-${template}`;
+                        console.log('Checking for existing templates with pattern:', basePattern);
+                        
+                        // Search by base pattern, not full template ID
+                        const response = await fetch(`${API_BASE_URL}/templates/search/${basePattern}`);
+                        const result = await response.json();
+                        const existingTemplates = result.data || [];
+                        
+                        console.log('Found existing templates:', existingTemplates);
+                        
+                        if (existingTemplates && existingTemplates.length > 0) {
+                            // Show popup for existing template
+                            this.showExistingTemplatePopup(existingTemplates, basePattern);
+                            return; // Don't generate new ID yet
+                        }
+                        
                         this.templateId = await window.templateEngineAPI.generateTemplateId(this.selections);
                     } catch (error) {
+                        console.error('Error checking existing templates:', error);
                         this.templateId = `${theme}-${audience}-${media}-${template}-001`;
                     }
                 } else {
@@ -1044,6 +1194,120 @@
                     'Auto Number'
                 ];
                 document.getElementById('template-id-breakdown').textContent = parts.join(' - ');
+            }
+
+            showExistingTemplatePopup(existingTemplates, basePattern) {
+                const latestTemplate = existingTemplates[0]; // Most recent template
+                const templateId = latestTemplate.template_id;
+                const dateCreated = new Date(latestTemplate.created_at).toLocaleDateString();
+                
+                // Create modal HTML
+                const modalHTML = `
+                    <div class="modal-overlay" id="template-modal">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h3>Existing Template Found!</h3>
+                                <p>A template already exists with these exact settings</p>
+                            </div>
+                            <div class="modal-body">
+                                <div class="template-info">
+                                    <div class="template-item">
+                                        <span class="template-id">${templateId}</span>
+                                        <span class="template-date">Created: ${dateCreated}</span>
+                                    </div>
+                                    <div style="font-size: 0.75rem; color: var(--gray-500); margin-top: 8px;">
+                                        Status: ${latestTemplate.status} | Pattern: ${basePattern}-XXX
+                                    </div>
+                                </div>
+                                
+                                <div class="modal-actions">
+                                    <button class="modal-btn modal-btn-primary" onclick="builder.useExistingTemplate('${templateId}')">
+                                        <span class="btn-icon">✏️</span>
+                                        <div class="btn-text">
+                                            <div>Edit Existing Template</div>
+                                            <div class="btn-description">Load template for editing and reuse</div>
+                                        </div>
+                                        <span class="recommended-badge">RECOMMENDED</span>
+                                    </button>
+                                    
+                                    <button class="modal-btn modal-btn-secondary" onclick="builder.createNewVersion('${basePattern}')">
+                                        <span class="btn-icon">📝</span>
+                                        <div class="btn-text">
+                                            <div>Create New Version</div>
+                                            <div class="btn-description">Start fresh with next available number</div>
+                                        </div>
+                                    </button>
+                                    
+                                    <button class="modal-btn modal-btn-outline" onclick="builder.closeModal()">
+                                        <span class="btn-icon">❌</span>
+                                        <div class="btn-text">
+                                            <div>Cancel</div>
+                                            <div class="btn-description">Change your current selections</div>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Add modal to DOM
+                document.body.insertAdjacentHTML('beforeend', modalHTML);
+                
+                // Add click outside to close
+                document.getElementById('template-modal').addEventListener('click', (e) => {
+                    if (e.target.id === 'template-modal') {
+                        this.closeModal();
+                    }
+                });
+            }
+
+            closeModal() {
+                const modal = document.getElementById('template-modal');
+                if (modal) {
+                    modal.remove();
+                }
+                // Reset template ID display
+                this.templateId = 'XX-XX-XX-XX-XXX';
+                document.getElementById('template-id-display').textContent = this.templateId;
+                document.getElementById('template-id-breakdown').textContent = 'Theme - Audience - Media - Template - Auto Number';
+            }
+
+            async useExistingTemplate(templateId) {
+                this.closeModal(); // Close the modal first
+                try {
+                    const templateData = await window.templateEngineAPI.loadTemplate(templateId);
+                    populateFormWithTemplate(templateData);
+                    this.proceedToCreation();
+                    alert(`✅ Existing template loaded successfully!\n\nID: ${templateId}\n\nYou can now edit the content and save your changes.`);
+                } catch (error) {
+                    console.error('Error loading existing template:', error);
+                    alert('Error loading existing template. Creating new template instead.');
+                    this.createNewVersion();
+                }
+            }
+
+            async createNewVersion(basePattern) {
+                this.closeModal(); // Close the modal first
+                try {
+                    this.templateId = await window.templateEngineAPI.generateTemplateId(this.selections);
+                    document.getElementById('template-id-display').textContent = this.templateId;
+                    const parts = [
+                        this.selections.theme ? this.formatDisplayName(this.selections.theme.value) : 'Theme',
+                        this.selections.audience ? this.formatDisplayName(this.selections.audience.value) : 'Audience',
+                        this.selections.media ? this.formatDisplayName(this.selections.media.value) : 'Media', 
+                        this.selections.template_type ? this.formatDisplayName(this.selections.template_type.value) : 'Template',
+                        'Auto Number'
+                    ];
+                    document.getElementById('template-id-breakdown').textContent = parts.join(' - ');
+                } catch (error) {
+                    const theme = this.selections.theme?.code || 'XX';
+                    const audience = this.selections.audience?.code || 'XX';
+                    const media = this.selections.media?.code || 'XX';
+                    const template = this.selections.template_type?.code || 'XX';
+                    this.templateId = `${theme}-${audience}-${media}-${template}-002`;
+                    document.getElementById('template-id-display').textContent = this.templateId;
+                }
             }
 
             updateButtonStates() {
