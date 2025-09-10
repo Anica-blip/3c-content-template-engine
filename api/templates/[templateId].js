@@ -27,7 +27,7 @@ export default async function handler(req, res) {
         .from('content_templates')
         .select('*')
         .eq('template_id', templateId)
-        .eq('status', 'active')
+        .eq('is_active', true)
         .single();
 
       if (error) {
@@ -49,8 +49,8 @@ export default async function handler(req, res) {
       const { data, error } = await supabase
         .from('content_templates')
         .update({ 
-          status: 'deleted',
-          deleted_at: new Date().toISOString()
+          is_active: false,
+          updated_at: new Date().toISOString()
         })
         .eq('template_id', templateId)
         .select();
