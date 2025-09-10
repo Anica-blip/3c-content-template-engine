@@ -1467,10 +1467,10 @@
             }
         }
 
-        // Fixed Reset Builder - Full page refresh
+        // Fixed Reset Builder - Force page refresh like CTRL+R
         function resetBuilder() {
             if (confirm('Reset all selections and content? This cannot be undone.')) {
-                location.reload();
+                window.location.reload(true);
             }
         }
 
