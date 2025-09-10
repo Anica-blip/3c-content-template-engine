@@ -937,14 +937,14 @@
         </div>
     </main>
 
-    <!-- API Integration - Vercel Backend -->
+    <!-- API Integration - Updated for Template Library Integration -->
     <script>
         // API Base URL - uses your deployed Vercel domain
         const API_BASE_URL = window.location.hostname === 'localhost' 
             ? 'http://localhost:3001/api' 
             : 'https://3c-content-template-engine.vercel.app/api';
 
-        // Template Engine API Client
+        // Template Engine API Client - Updated with Template Library Integration
         const templateEngineAPI = {
             // Test API connection
             async testConnection() {
@@ -971,7 +971,7 @@
                 }
             },
 
-            // Load template - Fixed
+            // Load template
             async loadTemplate(templateId) {
                 try {
                     const response = await fetch(`${API_BASE_URL}/templates/${templateId}`);
@@ -1062,12 +1062,46 @@
                 }
             },
 
-            // Forward to dashboard
+            // UPDATED: Forward to Template Library - Maps data correctly for pending_content_library table
             async forwardToDashboard(templateData) {
                 try {
-                    const response = await fetch(`${API_BASE_URL}/templates/${templateData.templateId}/forward`, {
-                        method: 'POST'
+                    // Map template data to Template Library format
+                    const forwardPayload = {
+                        template_id: templateData.templateId,
+                        content_title: templateData.content.title || 'Untitled Template',
+                        character_profile: templateData.selections.character?.value || null,
+                        theme: templateData.selections.theme?.value || null,
+                        audience: templateData.selections.audience?.value || null,
+                        media_type: templateData.selections.media?.value || null,
+                        template_type: templateData.selections.template_type?.value || null,
+                        platform: templateData.selections.platform?.value || null,
+                        title: templateData.content.title || '',
+                        description: templateData.content.description || '',
+                        hashtags: templateData.content.hashtags || [],
+                        keywords: templateData.content.keywords || '',
+                        cta: templateData.content.cta || '',
+                        media_files: [], // Initialize as empty array
+                        selected_platforms: templateData.selections.platform ? [templateData.selections.platform.value] : [],
+                        // Template Library specific fields
+                        status: 'pending',
+                        is_from_template: true,
+                        is_active: true,
+                        created_at: new Date().toISOString(),
+                        // Additional metadata
+                        brand_voice: templateData.selections.voice?.value || null,
+                        template_metadata: {
+                            originalTemplateId: templateData.templateId,
+                            createdFrom: 'content_template_engine',
+                            selections: templateData.selections
+                        }
+                    };
+
+                    const response = await fetch(`${API_BASE_URL}/forward-template`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(forwardPayload)
                     });
+                    
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
                     const result = await response.json();
                     return result;
@@ -1114,7 +1148,7 @@
                 this.templateId = 'XX-XX-XX-XX-XX-XX-XXX';
                 this.currentPhase = 'selection';
                 this.hashtags = [];
-                this.loadingExistingTemplate = false; // NEW: Flag to prevent ID regeneration when loading existing template
+                this.loadingExistingTemplate = false; // Flag to prevent ID regeneration when loading existing template
                 this.init();
             }
 
@@ -1160,7 +1194,7 @@
             }
 
             async updateTemplateId() {
-                // FIXED: Don't regenerate ID when loading existing template
+                // Don't regenerate ID when loading existing template
                 if (this.loadingExistingTemplate) {
                     return;
                 }
@@ -1169,18 +1203,14 @@
                 const audience = this.selections.audience?.code || 'XX';
                 const media = this.selections.media?.code || 'XX';
                 const template = this.selections.template_type?.code || 'XX';
-                
-                // NEW: Add character and voice codes
                 const character = this.getCharacterCode(this.selections.character?.value) || 'XX';
                 const voice = this.getVoiceCode(this.selections.voice?.value) || 'XX';
                 
                 if (window.templateEngineAPI && this.isValidForCreation()) {
                     try {
-                        // FIXED: Use the complete 6-part pattern for searching
                         const basePattern = `${theme}-${audience}-${media}-${template}-${character}-${voice}`;
                         console.log('Checking for existing templates with pattern:', basePattern);
                         
-                        // Search by complete base pattern
                         const response = await fetch(`${API_BASE_URL}/templates/search/${basePattern}`);
                         const result = await response.json();
                         const existingTemplates = result.data || [];
@@ -1188,9 +1218,8 @@
                         console.log('Found existing templates:', existingTemplates);
                         
                         if (existingTemplates && existingTemplates.length > 0) {
-                            // Show popup for existing template
                             this.showExistingTemplatePopup(existingTemplates, basePattern);
-                            return; // Don't generate new ID yet
+                            return;
                         }
                         
                         this.templateId = await window.templateEngineAPI.generateTemplateId(this.selections);
@@ -1235,21 +1264,18 @@
             }
 
             showExistingTemplatePopup(existingTemplates, basePattern) {
-                const latestTemplate = existingTemplates[0]; // Most recent template
+                const latestTemplate = existingTemplates[0];
                 const templateId = latestTemplate.template_id;
                 const dateCreated = new Date(latestTemplate.created_at).toLocaleDateString();
                 
-                // FIXED: Display content_title if available
                 const displayTitle = latestTemplate.content_title ? 
                     `${templateId} - ${latestTemplate.content_title}` : templateId;
                 
-                // FIXED: Remove any existing modals first to prevent stacking
                 const existingModal = document.getElementById('template-modal');
                 if (existingModal) {
                     existingModal.remove();
                 }
                 
-                // Create modal HTML with proper IDs for event listeners
                 const modalHTML = `
                     <div class="modal-overlay" id="template-modal">
                         <div class="modal-content">
@@ -1284,7 +1310,7 @@
                                     </button>
                                     
                                     <button class="modal-btn modal-btn-outline" id="cancel-modal-btn">
-                                        <span class="btn-icon">❌</span>
+                                        <span class="btn-icon">✕</span>
                                         <div class="btn-text">
                                             <div>Cancel</div>
                                             <div class="btn-description">Change your current selections</div>
@@ -1296,10 +1322,8 @@
                     </div>
                 `;
                 
-                // Add modal to DOM
                 document.body.insertAdjacentHTML('beforeend', modalHTML);
                 
-                // FIXED: Add event listeners with proper scope and immediate execution
                 const editBtn = document.getElementById('edit-template-btn');
                 const createBtn = document.getElementById('create-new-btn');
                 const cancelBtn = document.getElementById('cancel-modal-btn');
@@ -1329,7 +1353,6 @@
                     });
                 }
                 
-                // Add click outside to close
                 if (modalOverlay) {
                     modalOverlay.addEventListener('click', (e) => {
                         if (e.target.id === 'template-modal') {
@@ -1344,7 +1367,6 @@
                 if (modal) {
                     modal.remove();
                 }
-                // Reset template ID display to show current pattern
                 const theme = this.selections.theme?.code || 'XX';
                 const audience = this.selections.audience?.code || 'XX';
                 const media = this.selections.media?.code || 'XX';
@@ -1358,9 +1380,8 @@
             }
 
             async useExistingTemplate(templateId) {
-                this.closeModal(); // Close the modal first
+                this.closeModal();
                 try {
-                    // FIXED: Set flag to prevent ID regeneration
                     this.loadingExistingTemplate = true;
                     
                     const templateData = await window.templateEngineAPI.loadTemplate(templateId);
@@ -1371,13 +1392,12 @@
                     alert('Error loading existing template. Creating new template instead.');
                     this.createNewVersion();
                 } finally {
-                    // FIXED: Reset flag after loading is complete
                     this.loadingExistingTemplate = false;
                 }
             }
 
             async createNewVersion(basePattern) {
-                this.closeModal(); // Close the modal first
+                this.closeModal();
                 try {
                     this.templateId = await window.templateEngineAPI.generateTemplateId(this.selections);
                     document.getElementById('template-id-display').textContent = this.templateId;
@@ -1603,7 +1623,7 @@
         const builder = new TemplateBuilder();
         window.templateBuilder = builder;
 
-        // Global functions - now use API
+        // Global functions
         function proceedToCreation() { builder.proceedToCreation(); }
         function backToSelection() { builder.backToSelection(); }
         function addHashtag() { builder.addHashtag(); }
@@ -1716,7 +1736,6 @@
         }
 
         function populateFormWithTemplate(templateData) {
-            // FIXED: Set flag to prevent ID regeneration
             builder.loadingExistingTemplate = true;
             
             if (templateData.selections.theme) {
@@ -1748,7 +1767,6 @@
                 builder.handleSelection(document.getElementById('platform-select'));
             }
             
-            // FIXED: Set template ID directly without regeneration
             builder.templateId = templateData.templateId;
             document.getElementById('template-id-display').textContent = templateData.templateId;
             
@@ -1779,7 +1797,6 @@
                     builder.updateCharCounter(document.getElementById('cta-input'));
                 }
                 
-                // FIXED: Reset flag after population is complete
                 builder.loadingExistingTemplate = false;
             }, 100);
         }
@@ -1813,35 +1830,56 @@
             }
         }
 
+        // UPDATED: Forward to Dashboard with proper validation and success feedback
         async function forwardToDashboard() {
+            // Validate required fields
             if (!builder.selections.platform) {
                 alert('Please select a platform before forwarding to dashboard');
                 return;
             }
+            
             if (!window.templateEngineAPI) {
                 alert('API is not connected. Cannot forward template.');
                 return;
             }
+
             const data = builder.exportSelections();
+            
+            // Validate content exists
+            if (!data.content.title && !data.content.description) {
+                alert('Please add at least a title or description before forwarding');
+                return;
+            }
+
             try {
                 const forwardBtn = document.getElementById('forward-btn');
                 const originalText = forwardBtn.textContent;
                 forwardBtn.textContent = 'Forwarding...';
                 forwardBtn.disabled = true;
+
+                // First save the template
                 await window.templateEngineAPI.saveTemplate(data);
-                await window.templateEngineAPI.forwardToDashboard(data);
-                alert(`Template forwarded to dashboard!\nID: ${data.templateId}\nPlatform: ${builder.selections.platform.value}`);
+                
+                // Then forward to Template Library
+                const result = await window.templateEngineAPI.forwardToDashboard(data);
+                
+                alert(`✅ Template successfully forwarded to Dashboard!\n\nTemplate ID: ${data.templateId}\nPlatform: ${builder.selections.platform.value}\nTitle: ${data.content.title || 'Untitled'}\n\nYou can now find this template in your Template Library with status "Pending".`);
+                
+                // Show progress completion
+                document.getElementById('step-create').classList.remove('active');
+                document.getElementById('step-create').classList.add('completed');
+                document.getElementById('step-review').classList.add('active');
+                
             } catch (error) {
                 console.error('Error forwarding template:', error);
-                alert('Error forwarding template to dashboard. Please try again.');
+                alert(`❌ Error forwarding template to dashboard: ${error.message}\n\nPlease try again or contact support if the issue persists.`);
             } finally {
                 const forwardBtn = document.getElementById('forward-btn');
                 forwardBtn.textContent = 'Forward to Dashboard';
-                forwardBtn.disabled = true;
+                forwardBtn.disabled = !builder.selections.platform;
             }
         }
 
-        // Fixed Reset Builder - Force page refresh like CTRL+R
         function resetBuilder() {
             if (confirm('Reset all selections and content? This cannot be undone.')) {
                 window.location.reload(true);
