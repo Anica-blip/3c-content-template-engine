@@ -26,12 +26,35 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Selections are required' });
     }
 
+    // Helper functions for character and voice codes
+    const getCharacterCode = (character) => {
+      const codes = {
+        'anica': 'AN',
+        'caelum': 'CA', 
+        'aurion': 'AU'
+      };
+      return codes[character] || 'XX';
+    };
+
+    const getVoiceCode = (voice) => {
+      const codes = {
+        'casual': 'CS',
+        'friendly': 'FR',
+        'professional': 'PR',
+        'creative': 'CR'
+      };
+      return codes[voice] || 'XX';
+    };
+
     const theme = selections.theme?.code || 'XX';
     const audience = selections.audience?.code || 'XX';
     const media = selections.media?.code || 'XX';
     const template = selections.template_type?.code || 'XX';
+    const character = getCharacterCode(selections.character?.value);
+    const voice = getVoiceCode(selections.voice?.value);
     
-    const basePattern = `${theme}-${audience}-${media}-${template}`;
+    // NEW FORMAT: NA-EM-VD-VM-AN-FR-001
+    const basePattern = `${theme}-${audience}-${media}-${template}-${character}-${voice}`;
 
     // Query existing templates with this pattern
     const { data, error } = await supabase
