@@ -556,6 +556,13 @@
             color: var(--gray-500);
         }
 
+        .template-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: var(--space-2);
+        }
+
         .modal-actions {
             display: grid;
             gap: var(--space-3);
@@ -1107,6 +1114,7 @@
                 this.templateId = 'XX-XX-XX-XX-XX-XX-XXX';
                 this.currentPhase = 'selection';
                 this.hashtags = [];
+                this.loadingExistingTemplate = false; // NEW: Flag to prevent ID regeneration when loading existing template
                 this.init();
             }
 
@@ -1152,6 +1160,11 @@
             }
 
             async updateTemplateId() {
+                // FIXED: Don't regenerate ID when loading existing template
+                if (this.loadingExistingTemplate) {
+                    return;
+                }
+
                 const theme = this.selections.theme?.code || 'XX';
                 const audience = this.selections.audience?.code || 'XX';
                 const media = this.selections.media?.code || 'XX';
@@ -1226,6 +1239,9 @@
                 const templateId = latestTemplate.template_id;
                 const dateCreated = new Date(latestTemplate.created_at).toLocaleDateString();
                 
+                // FIXED: Display content_title if available
+                const templateTitle = latestTemplate.content_title ? `${templateId} - ${latestTemplate.content_title}` : templateId;
+                
                 // FIXED: Remove any existing modals first to prevent stacking
                 const existingModal = document.getElementById('template-modal');
                 if (existingModal) {
@@ -1242,6 +1258,7 @@
                             </div>
                             <div class="modal-body">
                                 <div class="template-info">
+                                    <div class="template-title">${templateTitle}</div>
                                     <div class="template-item">
                                         <span class="template-id">${templateId}</span>
                                         <span class="template-date">Created: ${dateCreated}</span>
@@ -1346,14 +1363,19 @@
             async useExistingTemplate(templateId) {
                 this.closeModal(); // Close the modal first
                 try {
+                    // FIXED: Set flag to prevent ID regeneration
+                    this.loadingExistingTemplate = true;
+                    
                     const templateData = await window.templateEngineAPI.loadTemplate(templateId);
                     populateFormWithTemplate(templateData);
                     this.proceedToCreation();
-                    // FIXED: Removed alert popup that was causing black screen
                 } catch (error) {
                     console.error('Error loading existing template:', error);
                     alert('Error loading existing template. Creating new template instead.');
                     this.createNewVersion();
+                } finally {
+                    // FIXED: Reset flag after loading is complete
+                    this.loadingExistingTemplate = false;
                 }
             }
 
@@ -1697,6 +1719,9 @@
         }
 
         function populateFormWithTemplate(templateData) {
+            // FIXED: Set flag to prevent ID regeneration
+            builder.loadingExistingTemplate = true;
+            
             if (templateData.selections.theme) {
                 document.getElementById('theme-select').value = templateData.selections.theme.value;
                 builder.handleSelection(document.getElementById('theme-select'));
@@ -1725,6 +1750,8 @@
                 document.getElementById('platform-select').value = templateData.selections.platform.value;
                 builder.handleSelection(document.getElementById('platform-select'));
             }
+            
+            // FIXED: Set template ID directly without regeneration
             builder.templateId = templateData.templateId;
             document.getElementById('template-id-display').textContent = templateData.templateId;
             
@@ -1754,6 +1781,9 @@
                     document.getElementById('cta-input').value = templateData.content.cta;
                     builder.updateCharCounter(document.getElementById('cta-input'));
                 }
+                
+                // FIXED: Reset flag after population is complete
+                builder.loadingExistingTemplate = false;
             }, 100);
         }
 
