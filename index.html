@@ -1405,6 +1405,37 @@
                 }
             }
 
+            async copyExistingTemplate(template) {
+                try {
+                    const templateData = await window.templateEngineAPI.loadTemplate(template.template_id);
+                    const newTemplateId = await window.templateEngineAPI.generateTemplateId(templateData.selections);
+                    templateData.templateId = newTemplateId;
+                    populateFormWithTemplate(templateData);
+                    this.proceedToCreation();
+                    alert(`Template copied! New ID: ${newTemplateId}\nMake any changes needed and save.`);
+                } catch (error) {
+                    console.error('Error copying template:', error);
+                    alert('Error copying template.');
+                }
+            }
+
+            async deleteExistingTemplate(template) {
+                const templateId = template.template_id;
+                const confirmDelete = confirm(`Are you sure you want to DELETE template: ${templateId}?\n\nThis action cannot be undone.\nThe template will be archived and the number will be available for reuse.`);
+                if (!confirmDelete) return;
+                
+                try {
+                    await window.templateEngineAPI.deleteTemplate(templateId);
+                    const templateNumber = templateId.split('-').pop();
+                    alert(`Template ${templateId} successfully deleted!\nTemplate has been archived and the number ${templateNumber} is now available for reuse.`);
+                    // Refresh the template ID display
+                    this.updateTemplateId();
+                } catch (error) {
+                    console.error('Error deleting template:', error);
+                    alert('Error deleting template. Please try again.');
+                }
+            }
+
             async createNewVersion(basePattern) {
                 this.closeModal();
                 try {
