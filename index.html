@@ -1100,7 +1100,7 @@
     </script>
 
     <script>
-        // Template Builder - Same as before, now uses API
+        // Template Builder with ALL fixes applied
         class TemplateBuilder {
             constructor() {
                 this.selections = { theme: null, character: null, voice: null, audience: null, media: null, template_type: null, platform: null };
@@ -1163,11 +1163,11 @@
                 
                 if (window.templateEngineAPI && this.isValidForCreation()) {
                     try {
-                        // Check for existing templates with same pattern (including character + voice)
+                        // FIXED: Use the complete 6-part pattern for searching
                         const basePattern = `${theme}-${audience}-${media}-${template}-${character}-${voice}`;
                         console.log('Checking for existing templates with pattern:', basePattern);
                         
-                        // Search by base pattern, not full template ID
+                        // Search by complete base pattern
                         const response = await fetch(`${API_BASE_URL}/templates/search/${basePattern}`);
                         const result = await response.json();
                         const existingTemplates = result.data || [];
@@ -1226,7 +1226,13 @@
                 const templateId = latestTemplate.template_id;
                 const dateCreated = new Date(latestTemplate.created_at).toLocaleDateString();
                 
-                // Create modal HTML with proper onclick handlers
+                // FIXED: Remove any existing modals first to prevent stacking
+                const existingModal = document.getElementById('template-modal');
+                if (existingModal) {
+                    existingModal.remove();
+                }
+                
+                // Create modal HTML with proper IDs for event listeners
                 const modalHTML = `
                     <div class="modal-overlay" id="template-modal">
                         <div class="modal-content">
@@ -1279,25 +1285,44 @@
                 // Add modal to DOM
                 document.body.insertAdjacentHTML('beforeend', modalHTML);
                 
-                // Add event listeners with proper scope
-                document.getElementById('edit-template-btn').addEventListener('click', () => {
-                    this.useExistingTemplate(templateId);
-                });
+                // FIXED: Add event listeners with proper scope and immediate execution
+                const editBtn = document.getElementById('edit-template-btn');
+                const createBtn = document.getElementById('create-new-btn');
+                const cancelBtn = document.getElementById('cancel-modal-btn');
+                const modalOverlay = document.getElementById('template-modal');
                 
-                document.getElementById('create-new-btn').addEventListener('click', () => {
-                    this.createNewVersion(basePattern);
-                });
+                if (editBtn) {
+                    editBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.useExistingTemplate(templateId);
+                    });
+                }
                 
-                document.getElementById('cancel-modal-btn').addEventListener('click', () => {
-                    this.closeModal();
-                });
+                if (createBtn) {
+                    createBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.createNewVersion(basePattern);
+                    });
+                }
+                
+                if (cancelBtn) {
+                    cancelBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.closeModal();
+                    });
+                }
                 
                 // Add click outside to close
-                document.getElementById('template-modal').addEventListener('click', (e) => {
-                    if (e.target.id === 'template-modal') {
-                        this.closeModal();
-                    }
-                });
+                if (modalOverlay) {
+                    modalOverlay.addEventListener('click', (e) => {
+                        if (e.target.id === 'template-modal') {
+                            this.closeModal();
+                        }
+                    });
+                }
             }
 
             closeModal() {
@@ -1324,7 +1349,7 @@
                     const templateData = await window.templateEngineAPI.loadTemplate(templateId);
                     populateFormWithTemplate(templateData);
                     this.proceedToCreation();
-                    // Remove the alert popup and just proceed smoothly
+                    // FIXED: Removed alert popup that was causing black screen
                 } catch (error) {
                     console.error('Error loading existing template:', error);
                     alert('Error loading existing template. Creating new template instead.');
