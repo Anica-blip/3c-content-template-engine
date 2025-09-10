@@ -1240,7 +1240,8 @@
                 const dateCreated = new Date(latestTemplate.created_at).toLocaleDateString();
                 
                 // FIXED: Display content_title if available
-                const templateTitle = latestTemplate.content_title ? `${templateId} - ${latestTemplate.content_title}` : templateId;
+                const displayTitle = latestTemplate.content_title ? 
+                    `${templateId} - ${latestTemplate.content_title}` : templateId;
                 
                 // FIXED: Remove any existing modals first to prevent stacking
                 const existingModal = document.getElementById('template-modal');
@@ -1258,13 +1259,9 @@
                             </div>
                             <div class="modal-body">
                                 <div class="template-info">
-                                    <div class="template-title">${templateTitle}</div>
+                                    <div class="template-title">${displayTitle}</div>
                                     <div class="template-item">
-                                        <span class="template-id">${templateId}</span>
                                         <span class="template-date">Created: ${dateCreated}</span>
-                                    </div>
-                                    <div style="font-size: 0.75rem; color: var(--gray-500); margin-top: 8px;">
-                                        Status: ${latestTemplate.status} | Pattern: ${basePattern}-XXX
                                     </div>
                                 </div>
                                 
