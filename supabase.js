@@ -215,28 +215,28 @@ const templateEngineAPI = {
     }
   },
 
-  // Forward template to dashboard
-  async forwardToDashboard(templateData) {
-    if (!supabase) throw new Error('Supabase not configured');
-    try {
-      // Update status to forwarded
-      const { error } = await supabase
-        .from('content_templates')
-        .update({ 
-          status: 'forwarded',
-          updated_at: new Date().toISOString()
-        })
-        .eq('template_id', templateData.templateId);
-        
-      if (error) throw error;
+// Forward template to dashboard
+async forwardToDashboard(templateData) {
+  if (!supabase) throw new Error('Supabase not configured');
+  try {
+    // Update status to forwarded
+    const { error } = await supabase
+      .from('content_templates')
+      .update({ 
+        status: 'forwarded',
+        updated_at: new Date().toISOString()
+      })
+      .eq('template_id', templateData.templateId);
       
-      // Here you could also create an entry in a dashboard_queue table
-      // or trigger other dashboard-related actions
-      
-      return true;
-    } catch (error) {
-      console.error('Error forwarding to dashboard:', error);
-      throw error;
+    if (error) throw error;
+    
+    // Here you could also create an entry in a dashboard_queue table
+    // or trigger other dashboard-related actions
+    
+    return true;
+  } catch (error) {
+    console.error('Error forwarding to dashboard:', error);
+    throw error;
     }
   }
 };
