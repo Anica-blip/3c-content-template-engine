@@ -215,28 +215,89 @@ const templateEngineAPI = {
     }
   },
 
-// Forward template to dashboard
-async forwardToDashboard(templateData) {
-  if (!supabase) throw new Error('Supabase not configured');
-  try {
-    // Update status to forwarded
-    const { error } = await supabase
-      .from('content_templates')
-      .update({ 
-        status: 'forwarded',
-        updated_at: new Date().toISOString()
-      })
-      .eq('template_id', templateData.templateId);
+  // Forward template to dashboard - ONLY THIS METHOD IS MODIFIED
+  async forwardToDashboard(templateData) {
+    if (!supabase) throw new Error('Supabase not configured');
+    try {
+      // First, get the full template data from content_templates
+      const { data: fullTemplate, error: fetchError } = await supabase
+        .from('content_templates')
+        .select('*')
+        .eq('template_id', templateData.templateId)
+        .eq('is_active', true)
+        .single();
+        
+      if (fetchError || !fullTemplate) {
+        throw new Error(`Template ${templateData.templateId} not found`);
+      }
+
+      // Create a COPY for Template Library (pending_content_library table)
+      const pendingTemplateData = {
+        id: `pending_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        template_id: fullTemplate.template_id,
+        content_title: fullTemplate.content_title || 'Untitled Template',
+        content_id: `content_${Date.now()}`,
+        
+        // Transform template data to Template Library format
+        character_profile: fullTemplate.character_value,
+        theme: fullTemplate.theme_value,
+        audience: fullTemplate.audience_value,
+        media_type: fullTemplate.media_value,
+        template_type: fullTemplate.template_type_value,
+        platform: fullTemplate.platform_value,
+        
+        // Content fields
+        title: fullTemplate.content_title,
+        description: fullTemplate.content_description,
+        hashtags: fullTemplate.content_hashtags || [],
+        keywords: fullTemplate.content_keywords,
+        cta: fullTemplate.content_cta,
+        
+        // Template Library specific fields
+        status: 'pending',
+        is_from_template: true,
+        source_template_id: fullTemplate.template_id,
+        is_active: true,
+        voiceStyle: fullTemplate.voice_value,
+        
+        // Platform selection for form
+        selected_platforms: fullTemplate.platform_value ? [fullTemplate.platform_value] : [],
+        media_files: [],
+        
+        // Timestamps and user info
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        user_id: fullTemplate.user_id,
+        created_by: 'template_engine'
+      };
+
+      // Insert COPY into pending_content_library table (Template Library reads from here)
+      const { data: insertedData, error: insertError } = await supabase
+        .from('pending_content_library')
+        .insert(pendingTemplateData)
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error('Error creating template copy:', insertError);
+        throw new Error(`Failed to forward template: ${insertError.message}`);
+      }
+
+      // NOTE: Original template remains unchanged in content_templates table
       
-    if (error) throw error;
-    
-    // Here you could also create an entry in a dashboard_queue table
-    // or trigger other dashboard-related actions
-    
-    return true;
-  } catch (error) {
-    console.error('Error forwarding to dashboard:', error);
-    throw error;
+      return {
+        success: true,
+        message: 'Template copy forwarded to dashboard successfully',
+        data: {
+          pendingTemplateId: insertedData.id,
+          originalTemplateId: templateData.templateId,
+          forwardedAt: new Date().toISOString()
+        }
+      };
+      
+    } catch (error) {
+      console.error('Error forwarding to dashboard:', error);
+      throw error;
     }
   }
 };
