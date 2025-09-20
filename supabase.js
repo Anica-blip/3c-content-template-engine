@@ -215,88 +215,76 @@ const templateEngineAPI = {
     }
   },
 
-  // Forward template to dashboard - CREATES A COPY
+  // Forward template to dashboard - SAVE COPY TO pending_content_library
   async forwardToDashboard(templateData) {
     if (!supabase) throw new Error('Supabase not configured');
     try {
-      // First, get the full template data from content_templates
-      const { data: fullTemplate, error: fetchError } = await supabase
-        .from('content_templates')
-        .select('*')
-        .eq('template_id', templateData.templateId)
-        .eq('is_active', true)
-        .single();
-        
-      if (fetchError || !fullTemplate) {
-        throw new Error(`Template ${templateData.templateId} not found`);
-      }
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id || null;
 
-      // Create a COPY for Template Library (pending_content_library table)
-      const pendingTemplateData = {
-        id: `pending_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        template_id: fullTemplate.template_id,
-        content_title: fullTemplate.content_title || 'Untitled Template',
+      // Save current form data as copy to pending_content_library
+      const saveData = {
+        template_id: templateData.templateId,
+        content_title: templateData.content.title || 'Untitled Template',
         content_id: `content_${Date.now()}`,
         
-        // Transform template data to Template Library format
-        character_profile: fullTemplate.character_value,
-        theme: fullTemplate.theme_value,
-        audience: fullTemplate.audience_value,
-        media_type: fullTemplate.media_value,
-        template_type: fullTemplate.template_type_value,
-        platform: fullTemplate.platform_value,
+        // Current selections from form
+        character_profile: templateData.selections.character?.value,
+        theme: templateData.selections.theme?.value,
+        audience: templateData.selections.audience?.value,
+        media_type: templateData.selections.media?.value,
+        template_type: templateData.selections.template_type?.value,
+        platform: templateData.selections.platform?.value,
+        voiceStyle: templateData.selections.voice?.value,
         
-        // Content fields
-        title: fullTemplate.content_title,
-        description: fullTemplate.content_description,
-        hashtags: fullTemplate.content_hashtags || [],
-        keywords: fullTemplate.content_keywords,
-        cta: fullTemplate.content_cta,
+        // Current content from form  
+        title: templateData.content.title,
+        description: templateData.content.description,
+        hashtags: templateData.content.hashtags,
+        keywords: templateData.content.keywords,
+        cta: templateData.content.cta,
         
-        // Template Library specific fields
+        // Standard fields
         status: 'pending',
         is_from_template: true,
-        source_template_id: fullTemplate.template_id,
+        source_template_id: templateData.templateId,
         is_active: true,
-        voiceStyle: fullTemplate.voice_style,
-        
-        // Platform selection for form
-        selected_platforms: fullTemplate.platform_value ? [fullTemplate.platform_value] : [],
+        selected_platforms: templateData.selections.platform?.value ? [templateData.selections.platform.value] : [],
         media_files: [],
-        
-        // Timestamps and user info
+        user_id: userId,
+        created_by: 'template_engine',
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        user_id: fullTemplate.user_id,
-        created_by: 'template_engine'
+        updated_at: new Date().toISOString()
       };
 
-      // Insert COPY into pending_content_library table (Template Library reads from here)
-      const { data: insertedData, error: insertError } = await supabase
+      console.log('Saving copy to pending_content_library:', saveData);
+
+      // Insert into pending_content_library table
+      const { data: savedData, error: saveError } = await supabase
         .from('pending_content_library')
-        .insert(pendingTemplateData)
+        .insert(saveData)
         .select()
         .single();
 
-      if (insertError) {
-        console.error('Error creating template copy:', insertError);
-        throw new Error(`Failed to forward template: ${insertError.message}`);
+      if (saveError) {
+        console.error('Database save error:', saveError);
+        throw new Error(`Save failed: ${saveError.message}`);
       }
 
-      // NOTE: Original template remains unchanged in content_templates table
-      
+      console.log('Copy saved successfully:', savedData);
+
       return {
         success: true,
-        message: 'Template copy forwarded to dashboard successfully',
+        message: 'Copy saved to pending_content_library',
         data: {
-          pendingTemplateId: insertedData.id,
-          originalTemplateId: templateData.templateId,
-          forwardedAt: new Date().toISOString()
+          savedId: savedData.id,
+          templateId: templateData.templateId,
+          platform: templateData.selections.platform?.value
         }
       };
       
     } catch (error) {
-      console.error('Error forwarding to dashboard:', error);
+      console.error('Error saving copy:', error);
       throw error;
     }
   }
