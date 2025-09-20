@@ -215,40 +215,40 @@ const templateEngineAPI = {
     }
   },
 
-  // Forward template to dashboard - ACTUALLY SAVE TO DATABASE
+  // Forward template to dashboard - SAVE COPY TO pending_content_library
   async forwardToDashboard(templateData) {
     if (!supabase) throw new Error('Supabase not configured');
     try {
       const { data: { user } } = await supabase.auth.getUser();
       const userId = user?.id || null;
 
-      // ACTUALLY SAVE the current form data to pending_content_library
+      // Save current form data as copy to pending_content_library
       const saveData = {
         template_id: templateData.templateId,
         content_title: templateData.content.title || 'Untitled Template',
         content_id: `content_${Date.now()}`,
         
-        // All current selections from form
-        character_profile: templateData.selections.character?.value || null,
-        theme: templateData.selections.theme?.value || null,
-        audience: templateData.selections.audience?.value || null,
-        media_type: templateData.selections.media?.value || null,
-        template_type: templateData.selections.template_type?.value || null,
-        platform: templateData.selections.platform?.value || null,
+        // Current selections from form
+        character_profile: templateData.selections.character?.value,
+        theme: templateData.selections.theme?.value,
+        audience: templateData.selections.audience?.value,
+        media_type: templateData.selections.media?.value,
+        template_type: templateData.selections.template_type?.value,
+        platform: templateData.selections.platform?.value,
+        voiceStyle: templateData.selections.voice?.value,
         
-        // All current content from form  
-        title: templateData.content.title || null,
-        description: templateData.content.description || null,
-        hashtags: templateData.content.hashtags || [],
-        keywords: templateData.content.keywords || null,
-        cta: templateData.content.cta || null,
+        // Current content from form  
+        title: templateData.content.title,
+        description: templateData.content.description,
+        hashtags: templateData.content.hashtags,
+        keywords: templateData.content.keywords,
+        cta: templateData.content.cta,
         
-        // Required fields
+        // Standard fields
         status: 'pending',
         is_from_template: true,
         source_template_id: templateData.templateId,
         is_active: true,
-        voiceStyle: templateData.selections.voice?.value || null,
         selected_platforms: templateData.selections.platform?.value ? [templateData.selections.platform.value] : [],
         media_files: [],
         user_id: userId,
@@ -257,9 +257,9 @@ const templateEngineAPI = {
         updated_at: new Date().toISOString()
       };
 
-      console.log('Saving to pending_content_library:', saveData);
+      console.log('Saving copy to pending_content_library:', saveData);
 
-      // ACTUAL DATABASE INSERT
+      // Insert into pending_content_library table
       const { data: savedData, error: saveError } = await supabase
         .from('pending_content_library')
         .insert(saveData)
@@ -268,24 +268,23 @@ const templateEngineAPI = {
 
       if (saveError) {
         console.error('Database save error:', saveError);
-        throw new Error(`Failed to save: ${saveError.message}`);
+        throw new Error(`Save failed: ${saveError.message}`);
       }
 
-      console.log('Successfully saved to database:', savedData);
+      console.log('Copy saved successfully:', savedData);
 
       return {
         success: true,
-        message: 'Template saved and forwarded to dashboard',
+        message: 'Copy saved to pending_content_library',
         data: {
-          savedId: savedData.id || savedData.content_id,
+          savedId: savedData.id,
           templateId: templateData.templateId,
-          platform: templateData.selections.platform?.value,
-          savedAt: new Date().toISOString()
+          platform: templateData.selections.platform?.value
         }
       };
       
     } catch (error) {
-      console.error('Error saving template:', error);
+      console.error('Error saving copy:', error);
       throw error;
     }
   }
