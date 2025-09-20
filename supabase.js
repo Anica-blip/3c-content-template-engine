@@ -215,15 +215,16 @@ const templateEngineAPI = {
     }
   },
 
-  // Forward template to dashboard - CREATES A COPY IN content_template_library
+  // Forward template to dashboard - CREATES A COPY IN pending_content_library
   async forwardToDashboard(templateData) {
     if (!supabase) throw new Error('Supabase not configured');
     try {
       const { data: { user } } = await supabase.auth.getUser();
       const userId = user?.id || null;
 
-      // Create a COPY in content_template_library using CURRENT form data
-      const templateLibraryData = {
+      // Create a COPY in pending_content_library using CURRENT form data
+      const pendingTemplateData = {
+        id: `pending_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         template_id: templateData.templateId,
         content_title: templateData.content.title || 'Untitled Template',
         content_id: `content_${Date.now()}`,
@@ -261,10 +262,10 @@ const templateEngineAPI = {
         created_by: 'template_engine'
       };
 
-      // Insert COPY into content_template_library table
+      // Insert COPY into pending_content_library table
       const { data: insertedData, error: insertError } = await supabase
-        .from('content_template_library')
-        .insert(templateLibraryData)
+        .from('pending_content_library')
+        .insert(pendingTemplateData)
         .select()
         .single();
 
@@ -277,7 +278,7 @@ const templateEngineAPI = {
         success: true,
         message: 'Template copy forwarded to dashboard successfully',
         data: {
-          libraryTemplateId: insertedData.template_id,
+          pendingTemplateId: insertedData.id,
           originalTemplateId: templateData.templateId,
           forwardedAt: new Date().toISOString()
         }
