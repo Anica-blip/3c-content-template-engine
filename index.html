@@ -937,165 +937,29 @@
         </div>
     </main>
 
-    <!-- API Integration - Vercel Backend -->
-    <script>
-        // API Base URL - uses your deployed Vercel domain
-        const API_BASE_URL = window.location.hostname === 'localhost' 
-            ? 'http://localhost:3001/api' 
-            : 'https://3c-content-template-engine.vercel.app/api';
+    <!-- Import your existing supabase.js -->
+    <script type="module">
+        // Import your existing templateEngineAPI from supabase.js
+        import { templateEngineAPI } from './supabase.js';
 
-        // Template Engine API Client
-        const templateEngineAPI = {
-            // Test API connection
-            async testConnection() {
-                try {
-                    const response = await fetch(`${API_BASE_URL}/test-connection`);
-                    const result = await response.json();
-                    return result;
-                } catch (error) {
-                    throw new Error(`API connection failed: ${error.message}`);
-                }
-            },
-
-            // Search templates
-            async searchExistingTemplates(templateId) {
-                try {
-                    const searchPattern = templateId.substring(0, templateId.lastIndexOf('-'));
-                    const response = await fetch(`${API_BASE_URL}/templates/search/${searchPattern}?fields=template_id,content_title,created_at,status`);
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    const result = await response.json();
-                    return result.data || [];
-                } catch (error) {
-                    console.error('Search error:', error);
-                    throw error;
-                }
-            },
-
-            // Load template - Fixed
-            async loadTemplate(templateId) {
-                try {
-                    const response = await fetch(`${API_BASE_URL}/templates/${templateId}`);
-                    if (!response.ok) {
-                        if (response.status === 404) {
-                            throw new Error('Template not found');
-                        }
-                        throw new Error(`HTTP ${response.status}`);
-                    }
-                    const result = await response.json();
-                    
-                    // Convert API response back to frontend format
-                    return {
-                        templateId: result.data.template_id,
-                        selections: {
-                            theme: result.data.theme_code ? { value: result.data.theme_value, code: result.data.theme_code } : null,
-                            character: result.data.character_value ? { value: result.data.character_value, code: null } : null,
-                            voice: result.data.voice_value ? { value: result.data.voice_value, code: null } : null,
-                            audience: result.data.audience_code ? { value: result.data.audience_value, code: result.data.audience_code } : null,
-                            media: result.data.media_code ? { value: result.data.media_value, code: result.data.media_code } : null,
-                            template_type: result.data.template_type_code ? { value: result.data.template_type_value, code: result.data.template_type_code } : null,
-                            platform: result.data.platform_code ? { value: result.data.platform_value, code: result.data.platform_code } : null
-                        },
-                        content: {
-                            title: result.data.content_title || '',
-                            description: result.data.content_description || '',
-                            hashtags: result.data.content_hashtags || [],
-                            keywords: result.data.content_keywords || '',
-                            credits: result.data.content_credits || '',
-                            cta: result.data.content_cta || ''
-                        },
-                        timestamp: result.data.created_at,
-                        phase: result.data.phase || 'creation',
-                        status: result.data.status || 'template'
-                    };
-                } catch (error) {
-                    console.error('Load template error:', error);
-                    throw error;
-                }
-            },
-
-            // Generate template ID
-            async generateTemplateId(selections) {
-                try {
-                    const response = await fetch(`${API_BASE_URL}/templates/generate-id`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ selections })
-                    });
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    const result = await response.json();
-                    return result.templateId;
-                } catch (error) {
-                    console.error('Generate ID error:', error);
-                    throw error;
-                }
-            },
-
-            // Save template
-            async saveTemplate(templateData) {
-                try {
-                    const response = await fetch(`${API_BASE_URL}/templates`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ templateData })
-                    });
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    const result = await response.json();
-                    return result.data;
-                } catch (error) {
-                    console.error('Save template error:', error);
-                    throw error;
-                }
-            },
-
-            // Delete template
-            async deleteTemplate(templateId) {
-                try {
-                    const response = await fetch(`${API_BASE_URL}/templates/${templateId}`, {
-                        method: 'DELETE'
-                    });
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    const result = await response.json();
-                    return result;
-                } catch (error) {
-                    console.error('Delete template error:', error);
-                    throw error;
-                }
-            },
-
-            // Forward to dashboard
-            async forwardToDashboard(templateData) {
-                try {
-                    const response = await fetch(`${API_BASE_URL}/templates/${templateData.templateId}/forward`, {
-                        method: 'POST'
-                    });
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    const result = await response.json();
-                    return result;
-                } catch (error) {
-                    console.error('Forward template error:', error);
-                    throw error;
-                }
-            }
-        };
-
-        // Test API connection on load
+        // Test connection on load
         async function testConnection() {
             const statusEl = document.getElementById('connection-status');
             try {
                 const result = await templateEngineAPI.testConnection();
                 if (result.status === 'connected') {
-                    statusEl.textContent = 'API Connected';
+                    statusEl.textContent = 'Supabase Connected';
                     statusEl.className = 'connection-status connected';
                 } else {
-                    throw new Error('API not ready');
+                    throw new Error('Supabase not ready');
                 }
             } catch (error) {
-                statusEl.textContent = `API Error: ${error.message}`;
+                statusEl.textContent = `DB Error: ${error.message}`;
                 statusEl.className = 'connection-status disconnected';
             }
         }
 
-        // Make API globally available
+        // Make your existing API globally available
         window.templateEngineAPI = templateEngineAPI;
         
         // Test connection when ready
