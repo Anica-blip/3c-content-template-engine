@@ -26,88 +26,77 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Template ID is required' });
     }
 
-    // Get the full template data from content_templates
-    const { data: fullTemplate, error: fetchError } = await supabase
+    // Get template from content_templates - SAME AS WORKING SAVE
+    const { data: template, error: fetchError } = await supabase
       .from('content_templates')
       .select('*')
       .eq('template_id', templateId)
       .eq('is_active', true)
       .single();
-      
-    if (fetchError || !fullTemplate) {
-      if (fetchError && fetchError.code === 'PGRST116') {
+
+    if (fetchError) {
+      if (fetchError.code === 'PGRST116') {
         return res.status(404).json({
           error: 'Template not found',
           templateId: templateId
         });
       }
-      throw new Error(`Template ${templateId} not found`);
+      throw fetchError;
     }
 
-    // Create a COPY for Template Library (pending_content_library table) - EXACT SAME AS SUPABASE.JS
-    const pendingTemplateData = {
-      id: `pending_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      template_id: fullTemplate.template_id,
-      content_title: fullTemplate.content_title || 'Untitled Template',
-      content_id: `content_${Date.now()}`,
+    // Create data for pending_content_library - SAME PATTERN AS WORKING SAVE
+    const insertData = {
+      template_id: template.template_id,
       
-      // Transform template data to Template Library format
-      character_profile: fullTemplate.character_value,
-      theme: fullTemplate.theme_value,
-      audience: fullTemplate.audience_value,
-      media_type: fullTemplate.media_value,
-      template_type: fullTemplate.template_type_value,
-      platform: fullTemplate.platform_value,
+      // Core fields - same structure as saveTemplate
+      theme_value: template.theme_value,
+      theme_code: template.theme_code,
+      character_value: template.character_value,
+      voice_value: template.voice_value,
+      audience_value: template.audience_value,
+      audience_code: template.audience_code,
+      media_value: template.media_value,
+      media_code: template.media_code,
+      template_type_value: template.template_type_value,
+      template_type_code: template.template_type_code,
+      platform_value: template.platform_value,
+      platform_code: template.platform_code,
       
-      // Content fields
-      title: fullTemplate.content_title,
-      description: fullTemplate.content_description,
-      hashtags: fullTemplate.content_hashtags || [],
-      keywords: fullTemplate.content_keywords,
-      cta: fullTemplate.content_cta,
+      // Content data - same structure as saveTemplate
+      content_title: template.content_title,
+      content_description: template.content_description,
+      content_hashtags: template.content_hashtags || [],
+      content_keywords: template.content_keywords,
+      content_credits: template.content_credits,
+      content_cta: template.content_cta,
       
-      // Template Library specific fields
+      // Metadata - same structure as saveTemplate
+      phase: template.phase || 'creation',
       status: 'pending',
-      is_from_template: true,
-      source_template_id: fullTemplate.template_id,
-      is_active: true,
-      voiceStyle: fullTemplate.voice_value,
       
-      // Platform selection for form
-      selected_platforms: fullTemplate.platform_value ? [fullTemplate.platform_value] : [],
-      media_files: [],
-      
-      // Timestamps and user info
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      user_id: fullTemplate.user_id,
-      created_by: 'template_engine'
+      // User tracking - same structure as saveTemplate
+      user_id: template.user_id,
+      created_by: template.created_by,
+      is_active: true
     };
 
-    // Insert COPY into pending_content_library table (Template Library reads from here)
-    const { data: insertedData, error: insertError } = await supabase
+    // Insert into pending_content_library - SAME PATTERN AS WORKING SAVE
+    const { data, error } = await supabase
       .from('pending_content_library')
-      .insert(pendingTemplateData)
+      .insert(insertData)
       .select()
       .single();
+      
+    if (error) throw error;
 
-    if (insertError) {
-      console.error('Error creating template copy:', insertError);
-      return res.status(500).json({ 
-        error: 'Failed to forward template to Template Library',
-        details: insertError.message 
-      });
-    }
-
-    // NOTE: Original template remains unchanged in content_templates table
-    
     res.status(200).json({
       success: true,
-      message: 'Template copy forwarded to dashboard successfully',
+      message: 'Template forwarded to Template Library successfully',
       data: {
-        pendingTemplateId: insertedData.id,
-        originalTemplateId: templateId,
-        forwardedAt: new Date().toISOString()
+        templateId: templateId,
+        platform: template.platform_value,
+        forwardedAt: new Date().toISOString(),
+        libraryEntry: data
       }
     });
 
