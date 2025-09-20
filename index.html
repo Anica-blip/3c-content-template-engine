@@ -937,14 +937,14 @@
         </div>
     </main>
 
-    <!-- API Integration - Vercel Backend -->
+    <!-- Keep existing API for working functions -->
     <script>
         // API Base URL - uses your deployed Vercel domain
         const API_BASE_URL = window.location.hostname === 'localhost' 
             ? 'http://localhost:3001/api' 
             : 'https://3c-content-template-engine.vercel.app/api';
 
-        // Template Engine API Client
+        // Template Engine API Client - KEEP EXISTING WORKING FUNCTIONS
         const templateEngineAPI = {
             // Test API connection
             async testConnection() {
@@ -971,7 +971,7 @@
                 }
             },
 
-            // Load template - Fixed
+            // Load template
             async loadTemplate(templateId) {
                 try {
                     const response = await fetch(`${API_BASE_URL}/templates/${templateId}`);
@@ -1060,21 +1060,6 @@
                     console.error('Delete template error:', error);
                     throw error;
                 }
-            },
-
-            // Forward to dashboard
-            async forwardToDashboard(templateData) {
-                try {
-                    const response = await fetch(`${API_BASE_URL}/templates/${templateData.templateId}/forward`, {
-                        method: 'POST'
-                    });
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    const result = await response.json();
-                    return result;
-                } catch (error) {
-                    console.error('Forward template error:', error);
-                    throw error;
-                }
             }
         };
 
@@ -1104,6 +1089,76 @@
         } else {
             testConnection();
         }
+    </script>
+
+    <!-- Separate system ONLY for forwardToDashboard -->
+    <script type="module">
+        import { supabase } from './supabase.js';
+
+        // Separate forwardToDashboard function using direct Supabase
+        window.forwardToDashboardDirect = async function(templateData) {
+            if (!supabase) throw new Error('Supabase not configured');
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                const userId = user?.id || null;
+
+                const saveData = {
+                    template_id: templateData.templateId,
+                    content_title: templateData.content.title || 'Untitled Template',
+                    content_id: `content_${Date.now()}`,
+                    character_profile: templateData.selections.character?.value,
+                    theme: templateData.selections.theme?.value,
+                    audience: templateData.selections.audience?.value,
+                    media_type: templateData.selections.media?.value,
+                    template_type: templateData.selections.template_type?.value,
+                    platform: templateData.selections.platform?.value,
+                    voiceStyle: templateData.selections.voice?.value,
+                    title: templateData.content.title,
+                    description: templateData.content.description,
+                    hashtags: templateData.content.hashtags,
+                    keywords: templateData.content.keywords,
+                    cta: templateData.content.cta,
+                    status: 'pending',
+                    is_from_template: true,
+                    source_template_id: templateData.templateId,
+                    is_active: true,
+                    selected_platforms: templateData.selections.platform?.value ? [templateData.selections.platform.value] : [],
+                    media_files: [],
+                    user_id: userId,
+                    created_by: 'template_engine',
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
+
+                console.log('Saving copy to pending_content_library:', saveData);
+
+                const { data: savedData, error: saveError } = await supabase
+                    .from('pending_content_library')
+                    .insert(saveData)
+                    .select()
+                    .single();
+
+                if (saveError) {
+                    console.error('Database save error:', saveError);
+                    throw new Error(`Save failed: ${saveError.message}`);
+                }
+
+                console.log('Copy saved successfully:', savedData);
+
+                return {
+                    success: true,
+                    message: 'Copy saved to pending_content_library',
+                    data: {
+                        savedId: savedData.id,
+                        templateId: templateData.templateId,
+                        platform: templateData.selections.platform?.value
+                    }
+                };
+            } catch (error) {
+                console.error('Error saving copy:', error);
+                throw error;
+            }
+        };
     </script>
 
     <script>
@@ -1963,31 +2018,26 @@
                 alert('Please select a platform before forwarding to dashboard');
                 return;
             }
-            if (!window.templateEngineAPI) {
-                alert('API is not connected. Cannot forward template.');
-                return;
-            }
             
             const data = builder.exportSelections();
             const forwardBtn = document.getElementById('forward-btn');
             const originalText = forwardBtn.textContent;
             
             try {
-                // Update button state
                 forwardBtn.textContent = 'Forwarding...';
                 forwardBtn.disabled = true;
                 
                 console.log('Forwarding template to dashboard:', data.templateId);
                 
-                // FIXED: Don't save when editing existing template, just forward with current platform
+                // Don't save when editing existing template, just forward with current platform
                 if (!builder.isEditingExistingTemplate) {
                     // Only save if it's a new template
                     await window.templateEngineAPI.saveTemplate(data);
                     console.log('Template saved successfully');
                 }
                 
-                // Then forward to Template Library (pending_content_library table)
-                const forwardResult = await window.templateEngineAPI.forwardToDashboard(data);
+                // Use separate direct Supabase system for forwarding
+                const forwardResult = await window.forwardToDashboardDirect(data);
                 console.log('Forward result:', forwardResult);
                 
                 if (forwardResult.success) {
@@ -1995,13 +2045,10 @@
                         `✅ Template Successfully Forwarded to Template Library!\n\n` +
                         `Template ID: ${data.templateId}\n` +
                         `Platform: ${builder.selections.platform.value}\n` +
-                        `Pending Template ID: ${forwardResult.data.pendingTemplateId}\n\n` +
-                        `The template is now available in the Content Manager > Template Library tab.`
+                        `The template copy is now available in the Content Manager.`
                     );
                     
-                    // FIXED: Don't reset when editing existing template - just update platform display
                     if (!builder.isEditingExistingTemplate) {
-                        // Optional: Reset form after successful forward for new templates
                         if (confirm('Would you like to reset the form to create a new template?')) {
                             resetBuilder();
                         }
@@ -2012,28 +2059,12 @@
                 
             } catch (error) {
                 console.error('Error forwarding template:', error);
-                
-                // More detailed error message
-                let errorMessage = 'Error forwarding template to dashboard.\n\n';
-                if (error.message.includes('not found')) {
-                    errorMessage += 'Template not found. Please save the template first and try again.';
-                } else if (error.message.includes('API')) {
-                    errorMessage += 'API connection issue. Please check your connection and try again.';
-                } else {
-                    errorMessage += `Details: ${error.message}\n\nPlease try again or contact support if the issue persists.`;
-                }
-                
-                alert(errorMessage);
+                alert(`Error forwarding template: ${error.message}`);
                 
             } finally {
-                // FIXED: Restore button state properly
                 forwardBtn.textContent = originalText;
-                
-                // FIXED: Only re-enable if all required conditions are met
                 const canForward = builder.isValidForCreation() && builder.selections.platform;
                 forwardBtn.disabled = !canForward;
-                
-                console.log('Forward to dashboard operation completed');
             }
         }
 
