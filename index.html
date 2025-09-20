@@ -1044,10 +1044,8 @@
                         const basePattern = `${theme}-${audience}-${media}-${template}-${character}-${voice}`;
                         console.log('Checking for existing templates with pattern:', basePattern);
                         
-                        // Search by complete base pattern
-                        const response = await fetch(`${API_BASE_URL}/templates/search/${basePattern}`);
-                        const result = await response.json();
-                        const existingTemplates = result.data || [];
+                        // FIXED: Use templateEngineAPI instead of fetch
+                        const existingTemplates = await window.templateEngineAPI.searchExistingTemplates(`${basePattern}-001`);
                         
                         console.log('Found existing templates:', existingTemplates);
                         
