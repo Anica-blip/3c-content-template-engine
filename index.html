@@ -1887,11 +1887,10 @@
                 document.getElementById('template-type-select').value = templateData.selections.template_type.value;
                 builder.handleSelection(document.getElementById('template-type-select'));
             }
-            
-            // Platform selection cleared for flexibility - user chooses platform for this copy
-            document.getElementById('platform-select').value = '';
-            builder.selections.platform = null;
-            document.getElementById('platform-select').classList.remove('completed');
+            if (templateData.selections.platform) {
+                document.getElementById('platform-select').value = templateData.selections.platform.value;
+                builder.handleSelection(document.getElementById('platform-select'));
+            }
             
             // FIXED: Set template ID directly without regeneration
             builder.templateId = templateData.templateId;
