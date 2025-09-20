@@ -26,7 +26,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Template ID is required' });
     }
 
-    // Get template from content_templates - SAME AS WORKING SAVE
+    // Get template from content_templates
     const { data: template, error: fetchError } = await supabase
       .from('content_templates')
       .select('*')
@@ -44,43 +44,48 @@ export default async function handler(req, res) {
       throw fetchError;
     }
 
-    // Create data for pending_content_library - SAME PATTERN AS WORKING SAVE
+    // Map to pending_content_library schema EXACTLY
     const insertData = {
+      // Core identification
       template_id: template.template_id,
+      content_id: `content_${Date.now()}`,
+      content_title: template.content_title || 'Untitled Template',
       
-      // Core fields - same structure as saveTemplate
-      theme_value: template.theme_value,
-      theme_code: template.theme_code,
-      character_value: template.character_value,
-      voice_value: template.voice_value,
-      audience_value: template.audience_value,
-      audience_code: template.audience_code,
-      media_value: template.media_value,
-      media_code: template.media_code,
-      template_type_value: template.template_type_value,
-      template_type_code: template.template_type_code,
-      platform_value: template.platform_value,
-      platform_code: template.platform_code,
+      // Selection data - map to correct field names
+      character_profile: template.character_value,
+      theme: template.theme_value,
+      audience: template.audience_value,
+      media_type: template.media_value,
+      template_type: template.template_type_value,
+      platform: template.platform_value,
       
-      // Content data - same structure as saveTemplate
-      content_title: template.content_title,
-      content_description: template.content_description,
-      content_hashtags: template.content_hashtags || [],
-      content_keywords: template.content_keywords,
-      content_credits: template.content_credits,
-      content_cta: template.content_cta,
+      // Content data - map to correct field names
+      title: template.content_title || '',
+      description: template.content_description || '',
+      hashtags: template.content_hashtags || [],
+      keywords: template.content_keywords || '',
+      cta: template.content_cta || '',
       
-      // Metadata - same structure as saveTemplate
-      phase: template.phase || 'creation',
+      // Required arrays
+      media_files: [],
+      selected_platforms: template.platform_value ? [template.platform_value] : [],
+      
+      // Template Library specific fields
       status: 'pending',
+      is_from_template: true,
+      source_template_id: template.template_id,
       
-      // User tracking - same structure as saveTemplate
+      // User tracking
       user_id: template.user_id,
-      created_by: template.created_by,
+      created_by: 'content_template_engine',
+      
+      // Timestamps
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
       is_active: true
     };
 
-    // Insert into pending_content_library - SAME PATTERN AS WORKING SAVE
+    // Insert into pending_content_library with correct schema
     const { data, error } = await supabase
       .from('pending_content_library')
       .insert(insertData)
