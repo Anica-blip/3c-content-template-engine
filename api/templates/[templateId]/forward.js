@@ -109,7 +109,8 @@ export default async function handler(req, res) {
         templateId: templateId,
         platform: template.platform_value,
         forwardedAt: new Date().toISOString(),
-        libraryEntry: data
+        libraryEntry: data,
+        pendingTemplateId: data.id
       }
     });
 
