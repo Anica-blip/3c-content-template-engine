@@ -68,8 +68,8 @@ export default async function handler(req, res) {
       status: 'pending',
       is_from_template: true,
       source_template_id: template.template_id,
-      user_id: template.user_id || 'system',
-      created_by: 'content_template_engine',
+      user_id: template.user_id,
+      created_by: template.created_by,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       is_active: true
