@@ -56,7 +56,7 @@ const templateEngineAPI = {
         selections: {
           theme: data.theme_code ? { value: data.theme_value, code: data.theme_code } : null,
           character: data.character_value ? { value: data.character_value, code: null } : null,
-          voice: data.voice_value ? { value: data.voice_value, code: null } : null,
+          voice: data.voice_style ? { value: data.voice_style, code: null } : null,
           audience: data.audience_code ? { value: data.audience_value, code: data.audience_code } : null,
           media: data.media_code ? { value: data.media_value, code: data.media_code } : null,
           template_type: data.template_type_code ? { value: data.template_type_value, code: data.template_type_code } : null,
@@ -130,7 +130,7 @@ const templateEngineAPI = {
         theme_value: templateData.selections.theme?.value || null,
         theme_code: templateData.selections.theme?.code || null,
         character_value: templateData.selections.character?.value || null,
-        voice_value: templateData.selections.voice?.value || null,
+        voice_style: templateData.selections.voice?.value || null,
         audience_value: templateData.selections.audience?.value || null,
         audience_code: templateData.selections.audience?.code || null,
         media_value: templateData.selections.media?.value || null,
@@ -215,59 +215,50 @@ const templateEngineAPI = {
     }
   },
 
-  // Forward template to dashboard - ONLY THIS METHOD IS MODIFIED
+  // Forward template to dashboard - CREATES A COPY WITH CURRENT CHANGES
   async forwardToDashboard(templateData) {
     if (!supabase) throw new Error('Supabase not configured');
     try {
-      // First, get the full template data from content_templates
-      const { data: fullTemplate, error: fetchError } = await supabase
-        .from('content_templates')
-        .select('*')
-        .eq('template_id', templateData.templateId)
-        .eq('is_active', true)
-        .single();
-        
-      if (fetchError || !fullTemplate) {
-        throw new Error(`Template ${templateData.templateId} not found`);
-      }
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id || null;
 
-      // Create a COPY for Template Library (pending_content_library table)
+      // Create a COPY using CURRENT form data (templateData), not database
       const pendingTemplateData = {
         id: `pending_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        template_id: fullTemplate.template_id,
-        content_title: fullTemplate.content_title || 'Untitled Template',
+        template_id: templateData.templateId,
+        content_title: templateData.content.title || 'Untitled Template',
         content_id: `content_${Date.now()}`,
         
-        // Transform template data to Template Library format
-        character_profile: fullTemplate.character_value,
-        theme: fullTemplate.theme_value,
-        audience: fullTemplate.audience_value,
-        media_type: fullTemplate.media_value,
-        template_type: fullTemplate.template_type_value,
-        platform: fullTemplate.platform_value,
+        // Transform CURRENT template data to Template Library format
+        character_profile: templateData.selections.character?.value || null,
+        theme: templateData.selections.theme?.value || null,
+        audience: templateData.selections.audience?.value || null,
+        media_type: templateData.selections.media?.value || null,
+        template_type: templateData.selections.template_type?.value || null,
+        platform: templateData.selections.platform?.value || null,
         
-        // Content fields
-        title: fullTemplate.content_title,
-        description: fullTemplate.content_description,
-        hashtags: fullTemplate.content_hashtags || [],
-        keywords: fullTemplate.content_keywords,
-        cta: fullTemplate.content_cta,
+        // CURRENT Content fields from form
+        title: templateData.content.title || null,
+        description: templateData.content.description || null,
+        hashtags: templateData.content.hashtags || [],
+        keywords: templateData.content.keywords || null,
+        cta: templateData.content.cta || null,
         
         // Template Library specific fields
         status: 'pending',
         is_from_template: true,
-        source_template_id: fullTemplate.template_id,
+        source_template_id: templateData.templateId,
         is_active: true,
-        voiceStyle: fullTemplate.voice_value,
+        voiceStyle: templateData.selections.voice?.value || null,
         
-        // Platform selection for form
-        selected_platforms: fullTemplate.platform_value ? [fullTemplate.platform_value] : [],
+        // CURRENT Platform selection for form
+        selected_platforms: templateData.selections.platform?.value ? [templateData.selections.platform.value] : [],
         media_files: [],
         
         // Timestamps and user info
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        user_id: fullTemplate.user_id,
+        user_id: userId,
         created_by: 'template_engine'
       };
 
