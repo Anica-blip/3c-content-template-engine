@@ -47,7 +47,7 @@ export default async function handler(req, res) {
       media_type: formData.selections.media?.value || null,
       template_type: formData.selections.template_type?.value || null,
       platform: formData.selections.platform?.value || null,
-      voiceStyle: formData.selections.voice?.value || null,
+      voice_style: formData.selections.voice?.value || null,
       
       // Current content from form - using simple field names from schema
       title: formData.content.title || '',
