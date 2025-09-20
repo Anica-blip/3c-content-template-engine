@@ -658,7 +658,7 @@
             <div class="header-content">
                 <div>
                     <h1 class="app-title">3C Content Template Engine</h1>
-                    <span class="app-subtitle">Create â€¢ Customize â€¢ Convert</span>
+                    <span class="app-subtitle">Create • Customize • Convert</span>
                 </div>
                 <div class="header-buttons">
                     <button class="btn btn-outline" onclick="resetBuilder()">Reset</button>
@@ -926,7 +926,7 @@
 
                         <!-- Creation Actions -->
                         <div class="action-buttons">
-                            <button class="btn btn-outline" onclick="backToSelection()">â† Back to Selection</button>
+                            <button class="btn btn-outline" onclick="backToSelection()">← Back to Selection</button>
                             <button class="btn btn-outline" onclick="previewTemplate()">Preview Template</button>
                             <button class="btn btn-secondary" onclick="saveTemplate()">Save Template</button>
                             <button class="btn btn-success" onclick="forwardToDashboard()" id="forward-btn" disabled>Forward to Dashboard</button>
@@ -1235,59 +1235,116 @@
             }
 
             showExistingTemplatePopup(existingTemplates, basePattern) {
-                const latestTemplate = existingTemplates[0]; // Most recent template
-                const templateId = latestTemplate.template_id;
-                const dateCreated = new Date(latestTemplate.created_at).toLocaleDateString();
-                
-                // FIXED: Display content_title if available
-                const displayTitle = latestTemplate.content_title ? 
-                    `${templateId} - ${latestTemplate.content_title}` : templateId;
-                
                 // FIXED: Remove any existing modals first to prevent stacking
                 const existingModal = document.getElementById('template-modal');
                 if (existingModal) {
                     existingModal.remove();
                 }
                 
-                // Create modal HTML with proper IDs for event listeners
+                // FIXED: Generate template list HTML for ALL templates, not just the latest
+                const templateListHTML = existingTemplates.map((template, index) => {
+                    const templateId = template.template_id;
+                    const dateCreated = new Date(template.created_at).toLocaleDateString();
+                    const displayTitle = template.content_title ? 
+                        `${templateId} - ${template.content_title}` : templateId;
+                    const status = template.status || 'template';
+                    
+                    return `
+                        <div class="template-item-card" style="
+                            padding: 12px;
+                            margin-bottom: 8px;
+                            border: 1px solid var(--gray-300);
+                            border-radius: 6px;
+                            background: var(--gray-50);
+                            cursor: pointer;
+                            transition: all 0.2s;
+                        " data-template-id="${templateId}" data-index="${index}">
+                            <div style="display: flex; justify-content: space-between; align-items: start; gap: 12px;">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; color: var(--gray-900); margin-bottom: 4px;">
+                                        ${displayTitle}
+                                    </div>
+                                    <div style="font-size: 12px; color: var(--gray-600); margin-bottom: 2px;">
+                                        Created: ${dateCreated}
+                                    </div>
+                                    <div style="font-size: 11px; color: var(--primary-600); font-weight: 500;">
+                                        Status: ${status.toUpperCase()}
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="template-action-btn edit-btn" data-action="edit" data-template-id="${templateId}" style="
+                                        padding: 6px 10px;
+                                        background: var(--success-500);
+                                        color: white;
+                                        border: none;
+                                        border-radius: 4px;
+                                        font-size: 12px;
+                                        cursor: pointer;
+                                        font-weight: 500;
+                                    ">Edit</button>
+                                    <button class="template-action-btn copy-btn" data-action="copy" data-template-id="${templateId}" style="
+                                        padding: 6px 10px;
+                                        background: var(--primary-600);
+                                        color: white;
+                                        border: none;
+                                        border-radius: 4px;
+                                        font-size: 12px;
+                                        cursor: pointer;
+                                        font-weight: 500;
+                                    ">Copy</button>
+                                    <button class="template-action-btn delete-btn" data-action="delete" data-template-id="${templateId}" style="
+                                        padding: 6px 10px;
+                                        background: var(--error-500);
+                                        color: white;
+                                        border: none;
+                                        border-radius: 4px;
+                                        font-size: 12px;
+                                        cursor: pointer;
+                                        font-weight: 500;
+                                    ">Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                // Create modal HTML with ALL templates listed and X button instead of cancel
                 const modalHTML = `
                     <div class="modal-overlay" id="template-modal">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h3>Existing Template Found!</h3>
-                                <p>A template already exists with these exact settings</p>
+                        <div class="modal-content" style="max-width: 700px; max-height: 80vh; overflow-y: auto;">
+                            <div class="modal-header" style="position: relative;">
+                                <h3>Found ${existingTemplates.length} Existing Template(s)</h3>
+                                <p>Templates matching pattern: ${basePattern}-XXX</p>
+                                <button id="close-modal-x" style="
+                                    position: absolute;
+                                    top: 16px;
+                                    right: 16px;
+                                    background: none;
+                                    border: none;
+                                    font-size: 24px;
+                                    color: white;
+                                    cursor: pointer;
+                                    padding: 4px;
+                                    line-height: 1;
+                                ">×</button>
                             </div>
                             <div class="modal-body">
-                                <div class="template-info">
-                                    <div class="template-title">${displayTitle}</div>
-                                    <div class="template-item">
-                                        <span class="template-date">Created: ${dateCreated}</span>
+                                <div style="margin-bottom: 16px;">
+                                    <div style="font-size: 14px; color: var(--gray-700); margin-bottom: 12px;">
+                                        Select an action for any template:
+                                    </div>
+                                    
+                                    <div class="template-list" style="max-height: 400px; overflow-y: auto;">
+                                        ${templateListHTML}
                                     </div>
                                 </div>
                                 
                                 <div class="modal-actions">
-                                    <button class="modal-btn modal-btn-primary" id="edit-template-btn">
-                                        <span class="btn-icon">âœï¸</span>
-                                        <div class="btn-text">
-                                            <div>Edit Existing Template</div>
-                                            <div class="btn-description">Load template for editing and reuse</div>
-                                        </div>
-                                        <span class="recommended-badge">RECOMMENDED</span>
-                                    </button>
-                                    
-                                    <button class="modal-btn modal-btn-secondary" id="create-new-btn">
-                                        <span class="btn-icon">ðŸ“</span>
+                                    <button class="modal-btn modal-btn-secondary" id="create-new-version-btn">
+                                        <span class="btn-icon">📝</span>
                                         <div class="btn-text">
                                             <div>Create New Version</div>
                                             <div class="btn-description">Start fresh with next available number</div>
-                                        </div>
-                                    </button>
-                                    
-                                    <button class="modal-btn modal-btn-outline" id="cancel-modal-btn">
-                                        <span class="btn-icon">âŒ</span>
-                                        <div class="btn-text">
-                                            <div>Cancel</div>
-                                            <div class="btn-description">Change your current selections</div>
                                         </div>
                                     </button>
                                 </div>
@@ -1299,19 +1356,40 @@
                 // Add modal to DOM
                 document.body.insertAdjacentHTML('beforeend', modalHTML);
                 
-                // FIXED: Add event listeners with proper scope and immediate execution
-                const editBtn = document.getElementById('edit-template-btn');
-                const createBtn = document.getElementById('create-new-btn');
-                const cancelBtn = document.getElementById('cancel-modal-btn');
-                const modalOverlay = document.getElementById('template-modal');
-                
-                if (editBtn) {
-                    editBtn.addEventListener('click', (e) => {
+                // FIXED: Add event listeners for all template action buttons
+                document.querySelectorAll('.template-action-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        this.useExistingTemplate(templateId);
+                        const action = e.target.dataset.action;
+                        const templateId = e.target.dataset.templateId;
+                        
+                        switch(action) {
+                            case 'edit':
+                                this.useExistingTemplate(templateId);
+                                break;
+                            case 'copy':
+                                this.copyExistingTemplate({ template_id: templateId }, basePattern);
+                                break;
+                            case 'delete':
+                                this.deleteExistingTemplate({ template_id: templateId }, templateId);
+                                break;
+                        }
                     });
-                }
+                    
+                    // Add hover effects
+                    btn.addEventListener('mouseenter', (e) => {
+                        e.target.style.opacity = '0.8';
+                    });
+                    btn.addEventListener('mouseleave', (e) => {
+                        e.target.style.opacity = '1';
+                    });
+                });
+                
+                // Add event listeners for modal actions
+                const createBtn = document.getElementById('create-new-version-btn');
+                const closeBtn = document.getElementById('close-modal-x');
+                const modalOverlay = document.getElementById('template-modal');
                 
                 if (createBtn) {
                     createBtn.addEventListener('click', (e) => {
@@ -1321,8 +1399,8 @@
                     });
                 }
                 
-                if (cancelBtn) {
-                    cancelBtn.addEventListener('click', (e) => {
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', (e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         this.closeModal();
@@ -1336,6 +1414,30 @@
                             this.closeModal();
                         }
                     });
+                }
+            }
+
+            async deleteExistingTemplate(template, templateId) {
+                const confirmDelete = confirm(
+                    `Are you sure you want to DELETE template: ${templateId}?\n\n` +
+                    `This action cannot be undone.\n` +
+                    `The template will be archived and the number will be available for reuse.`
+                );
+                
+                if (!confirmDelete) return;
+                
+                this.closeModal(); // Close the modal first
+                
+                try {
+                    await window.templateEngineAPI.deleteTemplate(templateId);
+                    const templateNumber = templateId.split('-').pop();
+                    alert(
+                        `Template ${templateId} successfully deleted!\n\n` +
+                        `Template has been archived and the number ${templateNumber} is now available for reuse.`
+                    );
+                } catch (error) {
+                    console.error('Error deleting template:', error);
+                    alert('Error deleting template. Please try again.');
                 }
             }
 
@@ -1376,6 +1478,21 @@
                 }
             }
 
+            async copyExistingTemplate(template, basePattern) {
+                this.closeModal(); // Close the modal first
+                try {
+                    const templateData = await window.templateEngineAPI.loadTemplate(template.template_id);
+                    const newTemplateId = await window.templateEngineAPI.generateTemplateId(templateData.selections);
+                    templateData.templateId = newTemplateId;
+                    populateFormWithTemplate(templateData);
+                    this.proceedToCreation();
+                    alert(`Template copied! New ID: ${newTemplateId}\nMake any changes needed and save.`);
+                } catch (error) {
+                    console.error('Error copying template:', error);
+                    alert('Error copying template.');
+                }
+            }
+
             async createNewVersion(basePattern) {
                 this.closeModal(); // Close the modal first
                 try {
@@ -1406,10 +1523,25 @@
             updateButtonStates() {
                 const requiredFields = ['theme', 'audience', 'media', 'template_type'];
                 const allRequired = requiredFields.every(field => this.selections[field]);
+                
                 document.getElementById('search-btn').disabled = !allRequired;
                 document.getElementById('proceed-btn').disabled = !allRequired;
+                
                 const forwardBtn = document.getElementById('forward-btn');
-                if (forwardBtn) forwardBtn.disabled = !allRequired || !this.selections.platform;
+                if (forwardBtn) {
+                    // FIXED: Forward button should be enabled when all required fields AND platform are selected
+                    const canForward = allRequired && this.selections.platform;
+                    forwardBtn.disabled = !canForward;
+                    
+                    // Update button title to indicate requirements
+                    if (!allRequired) {
+                        forwardBtn.title = 'Complete all required fields first';
+                    } else if (!this.selections.platform) {
+                        forwardBtn.title = 'Select a platform for optimization';
+                    } else {
+                        forwardBtn.title = 'Forward template to Content Manager Template Library';
+                    }
+                }
             }
 
             proceedToCreation() {
@@ -1438,11 +1570,7 @@
                     twitter: { title: { show: false }, description: { show: true, maxLength: 280, placeholder: "Your tweet content..." }, hashtags: { show: true, maxCount: 2, recommended: 1 }, keywords: { show: false }, cta: { show: true, maxLength: 25 } },
                     linkedin: { title: { show: true, maxLength: 150, placeholder: "Professional headline..." }, description: { show: true, maxLength: 3000, placeholder: "Professional post content..." }, hashtags: { show: true, maxCount: 5, recommended: 3 }, keywords: { show: true }, cta: { show: true, maxLength: 80 } },
                     youtube: { title: { show: true, maxLength: 100, placeholder: "YouTube video title..." }, description: { show: true, maxLength: 5000, placeholder: "Video description..." }, hashtags: { show: true, maxCount: 15, recommended: 5 }, keywords: { show: true }, cta: { show: true, maxLength: 100 } },
-                    facebook: { title: { show: true, maxLength: 120, placeholder: "Facebook post title..." }, description: { show: true, maxLength: 2000, placeholder: "Facebook post content..." }, hashtags: { show: true, maxCount: 5, recommended: 2 }, keywords: { show: false }, cta: { show: true, maxLength: 60 } },
-                    tiktok: { title: { show: false }, description: { show: true, maxLength: 2200, placeholder: "TikTok caption..." }, hashtags: { show: true, maxCount: 20, recommended: 5 }, keywords: { show: false }, cta: { show: true, maxLength: 30 } },
-                    telegram: { title: { show: true, maxLength: 100, placeholder: "Message title..." }, description: { show: true, maxLength: 4096, placeholder: "Telegram message content..." }, hashtags: { show: true, maxCount: 10, recommended: 3 }, keywords: { show: false }, cta: { show: true, maxLength: 50 } },
-                    pinterest: { title: { show: true, maxLength: 100, placeholder: "Pin title..." }, description: { show: true, maxLength: 500, placeholder: "Pin description..." }, hashtags: { show: true, maxCount: 20, recommended: 8 }, keywords: { show: true }, cta: { show: true, maxLength: 50 } },
-                    whatsapp: { title: { show: false }, description: { show: true, maxLength: 700, placeholder: "WhatsApp status..." }, hashtags: { show: true, maxCount: 5, recommended: 2 }, keywords: { show: false }, cta: { show: true, maxLength: 30 } }
+                    facebook: { title: { show: true, maxLength: 120, placeholder: "Facebook post title..." }, description: { show: true, maxLength: 2000, placeholder: "Facebook post content..." }, hashtags: { show: true, maxCount: 5, recommended: 2 }, keywords: { show: false }, cta: { show: true, maxLength: 60 } }
                 };
                 const config = platformConfigs[platform] || this.getDefaultConfig();
                 this.applyFieldConfiguration(config);
@@ -1822,22 +1950,67 @@
                 alert('API is not connected. Cannot forward template.');
                 return;
             }
+            
             const data = builder.exportSelections();
+            const forwardBtn = document.getElementById('forward-btn');
+            const originalText = forwardBtn.textContent;
+            
             try {
-                const forwardBtn = document.getElementById('forward-btn');
-                const originalText = forwardBtn.textContent;
+                // Update button state
                 forwardBtn.textContent = 'Forwarding...';
                 forwardBtn.disabled = true;
+                
+                console.log('Forwarding template to dashboard:', data.templateId);
+                
+                // First ensure template is saved
                 await window.templateEngineAPI.saveTemplate(data);
-                await window.templateEngineAPI.forwardToDashboard(data);
-                alert(`Template forwarded to dashboard!\nID: ${data.templateId}\nPlatform: ${builder.selections.platform.value}`);
+                console.log('Template saved successfully');
+                
+                // Then forward to Template Library (pending_content_library table)
+                const forwardResult = await window.templateEngineAPI.forwardToDashboard(data);
+                console.log('Forward result:', forwardResult);
+                
+                if (forwardResult.success) {
+                    alert(
+                        `✅ Template Successfully Forwarded to Template Library!\n\n` +
+                        `Template ID: ${data.templateId}\n` +
+                        `Platform: ${builder.selections.platform.value}\n` +
+                        `Pending Template ID: ${forwardResult.data.pendingTemplateId}\n\n` +
+                        `The template is now available in the Content Manager > Template Library tab.`
+                    );
+                    
+                    // Optional: Reset form after successful forward
+                    if (confirm('Would you like to reset the form to create a new template?')) {
+                        resetBuilder();
+                    }
+                } else {
+                    throw new Error('Forward operation failed');
+                }
+                
             } catch (error) {
                 console.error('Error forwarding template:', error);
-                alert('Error forwarding template to dashboard. Please try again.');
+                
+                // More detailed error message
+                let errorMessage = 'Error forwarding template to dashboard.\n\n';
+                if (error.message.includes('not found')) {
+                    errorMessage += 'Template not found. Please save the template first and try again.';
+                } else if (error.message.includes('API')) {
+                    errorMessage += 'API connection issue. Please check your connection and try again.';
+                } else {
+                    errorMessage += `Details: ${error.message}\n\nPlease try again or contact support if the issue persists.`;
+                }
+                
+                alert(errorMessage);
+                
             } finally {
-                const forwardBtn = document.getElementById('forward-btn');
-                forwardBtn.textContent = 'Forward to Dashboard';
-                forwardBtn.disabled = true;
+                // FIXED: Restore button state properly
+                forwardBtn.textContent = originalText;
+                
+                // FIXED: Only re-enable if all required conditions are met
+                const canForward = builder.isValidForCreation() && builder.selections.platform;
+                forwardBtn.disabled = !canForward;
+                
+                console.log('Forward to dashboard operation completed');
             }
         }
 
