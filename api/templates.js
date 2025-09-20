@@ -64,7 +64,7 @@ export default async function handler(req, res) {
         theme_value: templateData.selections.theme?.value || null,
         theme_code: templateData.selections.theme?.code || null,
         character_value: templateData.selections.character?.value || null,
-        voice_value: templateData.selections.voice?.value || null,
+        voice_style: templateData.selections.voice?.value || null,  // FIXED: Changed from voice_value to voice_style
         audience_value: templateData.selections.audience?.value || null,
         audience_code: templateData.selections.audience?.code || null,
         media_value: templateData.selections.media?.value || null,
