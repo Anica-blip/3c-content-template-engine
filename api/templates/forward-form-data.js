@@ -73,17 +73,25 @@ export default async function handler(req, res) {
 
     // ALWAYS INSERT - never update existing
     const { data: savedData, error: saveError } = await supabase
-      .from('pending_content_library')
+      .from('pending_content_library')  // CORRECT: Using pending_content_library table
       .insert(insertData)
       .select()
       .single();
 
     if (saveError) {
-      console.error('Failed to create new copy:', saveError);
+      console.error('Failed to create new copy - Full error details:', {
+        message: saveError.message,
+        details: saveError.details,
+        hint: saveError.hint,
+        code: saveError.code
+      });
       return res.status(500).json({
         error: 'Failed to create new copy in pending library',
         message: saveError.message,
-        details: saveError.details
+        details: saveError.details,
+        hint: saveError.hint,
+        code: saveError.code,
+        insertData: Object.keys(insertData) // Show what fields we tried to insert
       });
     }
 
