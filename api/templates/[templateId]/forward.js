@@ -35,6 +35,7 @@ export default async function handler(req, res) {
       .single();
 
     if (fetchError) {
+      console.error('Fetch error:', fetchError);
       if (fetchError.code === 'PGRST116') {
         return res.status(404).json({
           error: 'Template not found',
@@ -44,55 +45,62 @@ export default async function handler(req, res) {
       throw fetchError;
     }
 
-    // Map to pending_content_library schema EXACTLY
+    console.log('Template found:', template.template_id);
+
+    // Map to pending_content_library schema - NO manual ID
     const insertData = {
-      // Core identification
       template_id: template.template_id,
-      content_id: `content_${Date.now()}`,
       content_title: template.content_title || 'Untitled Template',
-      
-      // Selection data - map to correct field names
-      character_profile: template.character_value,
-      theme: template.theme_value,
-      audience: template.audience_value,
-      media_type: template.media_value,
-      template_type: template.template_type_value,
-      platform: template.platform_value,
-      
-      // Content data - map to correct field names
+      content_id: `content_${Date.now()}`,
+      character_profile: template.character_value || null,
+      theme: template.theme_value || null,
+      audience: template.audience_value || null,
+      media_type: template.media_value || null,
+      template_type: template.template_type_value || null,
+      platform: template.platform_value || null,
       title: template.content_title || '',
       description: template.content_description || '',
       hashtags: template.content_hashtags || [],
       keywords: template.content_keywords || '',
       cta: template.content_cta || '',
-      
-      // Required arrays
       media_files: [],
       selected_platforms: template.platform_value ? [template.platform_value] : [],
-      
-      // Template Library specific fields
       status: 'pending',
       is_from_template: true,
       source_template_id: template.template_id,
-      
-      // User tracking
-      user_id: template.user_id,
+      user_id: template.user_id || 'system',
       created_by: 'content_template_engine',
-      
-      // Timestamps
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       is_active: true
     };
 
-    // Insert into pending_content_library with correct schema
+    console.log('Insert data prepared:', Object.keys(insertData));
+
+    // Insert into pending_content_library
     const { data, error } = await supabase
       .from('pending_content_library')
       .insert(insertData)
       .select()
       .single();
       
-    if (error) throw error;
+    if (error) {
+      console.error('Insert error details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
+      return res.status(500).json({
+        error: 'Failed to forward template',
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
+    }
+
+    console.log('Successfully inserted into pending_content_library');
 
     res.status(200).json({
       success: true,
@@ -109,7 +117,8 @@ export default async function handler(req, res) {
     console.error('Forward template error:', error);
     res.status(500).json({
       error: 'Internal server error',
-      message: error.message
+      message: error.message,
+      stack: error.stack
     });
   }
 }
