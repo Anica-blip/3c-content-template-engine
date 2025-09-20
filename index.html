@@ -1969,38 +1969,46 @@
             
             try {
                 // Update button state
-                forwardBtn.textContent = 'Forwarding...';
+                forwardBtn.textContent = 'Creating Copy...';
                 forwardBtn.disabled = true;
                 
-                console.log('Forwarding current form data to dashboard');
+                console.log('Creating NEW copy in pending_content_library with current form data');
                 
-                // FIXED: Use existing supabase.js forwardToDashboard method directly
-                // Import and use the supabase templateEngineAPI instead of Vercel API
-                const { templateEngineAPI } = await import('./supabase.js');
-                const forwardResult = await templateEngineAPI.forwardToDashboard(data);
+                // Call the specific API endpoint that creates NEW copies
+                const response = await fetch(`${API_BASE_URL}/templates/forward-form-data`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ formData: data })
+                });
                 
-                console.log('Forward result:', forwardResult);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const forwardResult = await response.json();
+                console.log('NEW copy created:', forwardResult);
                 
                 if (forwardResult.success) {
                     alert(
-                        `Template Successfully Forwarded to Template Library!\n\n` +
-                        `Source Template: ${builder.isEditingExistingTemplate ? builder.originalTemplateId : 'New Template'}\n` +
+                        `NEW Copy Created in Template Library!\n\n` +
+                        `Source Template: ${data.templateId}\n` +
                         `Platform: ${builder.selections.platform.value}\n` +
-                        `Pending Template ID: ${forwardResult.data.savedId}\n\n` +
-                        `A new copy has been created in the Content Manager > Template Library tab.`
+                        `New Copy ID: ${forwardResult.data.pendingTemplateId}\n` +
+                        `Content ID: ${forwardResult.data.newContentId}\n\n` +
+                        `A completely new copy has been created in pending_content_library.`
                     );
                 } else {
-                    throw new Error('Forward operation failed');
+                    throw new Error('Failed to create new copy');
                 }
                 
             } catch (error) {
-                console.error('Error forwarding template:', error);
+                console.error('Error creating new copy:', error);
                 
-                let errorMessage = 'Error forwarding template to dashboard.\n\n';
-                if (error.message.includes('not configured')) {
-                    errorMessage += 'Database connection issue. Please check your configuration.';
+                let errorMessage = 'Error creating new copy in Template Library.\n\n';
+                if (error.message.includes('405')) {
+                    errorMessage += 'API endpoint not found. Check that forward-form-data.js is in /api/templates/ folder.';
                 } else {
-                    errorMessage += `Details: ${error.message}\n\nPlease try again or contact support if the issue persists.`;
+                    errorMessage += `Details: ${error.message}`;
                 }
                 
                 alert(errorMessage);
