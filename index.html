@@ -937,14 +937,14 @@
         </div>
     </main>
 
-    <!-- API Integration - Restored Working Backend -->
+    <!-- API Integration - Vercel Backend -->
     <script>
         // API Base URL - uses your deployed Vercel domain
         const API_BASE_URL = window.location.hostname === 'localhost' 
             ? 'http://localhost:3001/api' 
             : 'https://3c-content-template-engine.vercel.app/api';
 
-        // Template Engine API Client - Your Working Backend
+        // Template Engine API Client
         const templateEngineAPI = {
             // Test API connection
             async testConnection() {
@@ -957,7 +957,7 @@
                 }
             },
 
-            // Search templates - Fixed to use your backend
+            // Search templates
             async searchExistingTemplates(templateId) {
                 try {
                     const searchPattern = templateId.substring(0, templateId.lastIndexOf('-'));
@@ -971,7 +971,7 @@
                 }
             },
 
-            // Load template
+            // Load template - Fixed
             async loadTemplate(templateId) {
                 try {
                     const response = await fetch(`${API_BASE_URL}/templates/${templateId}`);
@@ -1062,12 +1062,11 @@
                 }
             },
 
-            // Forward to dashboard - Uses your working forward.js endpoint
+            // Forward to dashboard
             async forwardToDashboard(templateData) {
                 try {
                     const response = await fetch(`${API_BASE_URL}/templates/${templateData.templateId}/forward`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' }
+                        method: 'POST'
                     });
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
                     const result = await response.json();
@@ -1115,7 +1114,9 @@
                 this.templateId = 'XX-XX-XX-XX-XX-XX-XXX';
                 this.currentPhase = 'selection';
                 this.hashtags = [];
-                this.loadingExistingTemplate = false; // NEW: Flag to prevent ID regeneration when loading existing template
+                this.loadingExistingTemplate = false;
+                this.isEditingExistingTemplate = false; // NEW: Track if we're editing existing template
+                this.originalTemplateId = null; // NEW: Store original template ID
                 this.init();
             }
 
@@ -1156,13 +1157,19 @@
                     this.selections[field] = null;
                     selectElement.classList.remove('completed');
                 }
-                this.updateTemplateId();
+
+                // FIXED: Don't regenerate template ID if we're editing existing template
+                // Platform changes should only affect forwarding, not template identity
+                if (!this.isEditingExistingTemplate) {
+                    this.updateTemplateId();
+                }
+                
                 this.updateButtonStates();
             }
 
             async updateTemplateId() {
-                // FIXED: Don't regenerate ID when loading existing template
-                if (this.loadingExistingTemplate) {
+                // FIXED: Don't regenerate ID when loading existing template OR editing existing template
+                if (this.loadingExistingTemplate || this.isEditingExistingTemplate) {
                     return;
                 }
 
@@ -1181,8 +1188,10 @@
                         const basePattern = `${theme}-${audience}-${media}-${template}-${character}-${voice}`;
                         console.log('Checking for existing templates with pattern:', basePattern);
                         
-                        // FIXED: Use templateEngineAPI instead of fetch
-                        const existingTemplates = await window.templateEngineAPI.searchExistingTemplates(`${basePattern}-001`);
+                        // Search by complete base pattern
+                        const response = await fetch(`${API_BASE_URL}/templates/search/${basePattern}`);
+                        const result = await response.json();
+                        const existingTemplates = result.data || [];
                         
                         console.log('Found existing templates:', existingTemplates);
                         
@@ -1461,8 +1470,10 @@
             async useExistingTemplate(templateId) {
                 this.closeModal(); // Close the modal first
                 try {
-                    // FIXED: Set flag to prevent ID regeneration
+                    // FIXED: Set flags to prevent ID regeneration
                     this.loadingExistingTemplate = true;
+                    this.isEditingExistingTemplate = true; // NEW: Set editing flag
+                    this.originalTemplateId = templateId; // NEW: Store original template ID
                     
                     const templateData = await window.templateEngineAPI.loadTemplate(templateId);
                     populateFormWithTemplate(templateData);
@@ -1472,7 +1483,7 @@
                     alert('Error loading existing template. Creating new template instead.');
                     this.createNewVersion();
                 } finally {
-                    // FIXED: Reset flag after loading is complete
+                    // FIXED: Reset loading flag but keep editing flag
                     this.loadingExistingTemplate = false;
                 }
             }
@@ -1715,8 +1726,12 @@
                     credits: document.getElementById('credits-input')?.value || '',
                     cta: document.getElementById('cta-input')?.value || ''
                 };
+                
+                // FIXED: Use original template ID if editing existing template
+                const templateId = this.isEditingExistingTemplate ? this.originalTemplateId : this.templateId;
+                
                 return {
-                    templateId: this.templateId,
+                    templateId: templateId,
                     selections: this.selections,
                     content: contentData,
                     timestamp: new Date().toISOString(),
@@ -1843,8 +1858,10 @@
         }
 
         function populateFormWithTemplate(templateData) {
-            // FIXED: Set flag to prevent ID regeneration
+            // FIXED: Set flags to prevent ID regeneration AND mark as editing existing template
             builder.loadingExistingTemplate = true;
+            builder.isEditingExistingTemplate = true;
+            builder.originalTemplateId = templateData.templateId;
             
             if (templateData.selections.theme) {
                 document.getElementById('theme-select').value = templateData.selections.theme.value;
@@ -1906,7 +1923,7 @@
                     builder.updateCharCounter(document.getElementById('cta-input'));
                 }
                 
-                // FIXED: Reset flag after population is complete
+                // FIXED: Reset loading flag but keep editing flag
                 builder.loadingExistingTemplate = false;
             }, 100);
         }
@@ -1961,9 +1978,12 @@
                 
                 console.log('Forwarding template to dashboard:', data.templateId);
                 
-                // First ensure template is saved
-                await window.templateEngineAPI.saveTemplate(data);
-                console.log('Template saved successfully');
+                // FIXED: Don't save when editing existing template, just forward with current platform
+                if (!builder.isEditingExistingTemplate) {
+                    // Only save if it's a new template
+                    await window.templateEngineAPI.saveTemplate(data);
+                    console.log('Template saved successfully');
+                }
                 
                 // Then forward to Template Library (pending_content_library table)
                 const forwardResult = await window.templateEngineAPI.forwardToDashboard(data);
@@ -1978,9 +1998,12 @@
                         `The template is now available in the Content Manager > Template Library tab.`
                     );
                     
-                    // Optional: Reset form after successful forward
-                    if (confirm('Would you like to reset the form to create a new template?')) {
-                        resetBuilder();
+                    // FIXED: Don't reset when editing existing template - just update platform display
+                    if (!builder.isEditingExistingTemplate) {
+                        // Optional: Reset form after successful forward for new templates
+                        if (confirm('Would you like to reset the form to create a new template?')) {
+                            resetBuilder();
+                        }
                     }
                 } else {
                     throw new Error('Forward operation failed');
