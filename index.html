@@ -1062,23 +1062,6 @@
                 }
             },
 
-            // Forward current form data as NEW copy to dashboard
-            async forwardCurrentFormData(formData) {
-                try {
-                    const response = await fetch(`${API_BASE_URL}/templates/forward-form-data`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ formData })
-                    });
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    const result = await response.json();
-                    return result;
-                } catch (error) {
-                    console.error('Forward form data error:', error);
-                    throw error;
-                }
-            },
-
             // Forward to dashboard
             async forwardToDashboard(templateData) {
                 try {
@@ -1979,10 +1962,6 @@
                 alert('Please select a platform before forwarding to dashboard');
                 return;
             }
-            if (!window.templateEngineAPI) {
-                alert('API is not connected. Cannot forward template.');
-                return;
-            }
             
             const data = builder.exportSelections();
             const forwardBtn = document.getElementById('forward-btn');
@@ -1993,23 +1972,23 @@
                 forwardBtn.textContent = 'Forwarding...';
                 forwardBtn.disabled = true;
                 
-                console.log('Forwarding current form data to dashboard:', data);
+                console.log('Forwarding current form data to dashboard');
                 
-                // MODIFIED: Always forward current form data as NEW copy to pending_content_library
-                // Never update the original template - always create new copy
-                const forwardResult = await window.templateEngineAPI.forwardCurrentFormData(data);
+                // FIXED: Use existing supabase.js forwardToDashboard method directly
+                // Import and use the supabase templateEngineAPI instead of Vercel API
+                const { templateEngineAPI } = await import('./supabase.js');
+                const forwardResult = await templateEngineAPI.forwardToDashboard(data);
+                
                 console.log('Forward result:', forwardResult);
                 
                 if (forwardResult.success) {
                     alert(
-                        `✅ Template Successfully Forwarded to Template Library!\n\n` +
+                        `Template Successfully Forwarded to Template Library!\n\n` +
                         `Source Template: ${builder.isEditingExistingTemplate ? builder.originalTemplateId : 'New Template'}\n` +
                         `Platform: ${builder.selections.platform.value}\n` +
-                        `Pending Template ID: ${forwardResult.data.pendingTemplateId}\n\n` +
+                        `Pending Template ID: ${forwardResult.data.savedId}\n\n` +
                         `A new copy has been created in the Content Manager > Template Library tab.`
                     );
-                    
-                    // Don't reset form - user might want to forward to another platform
                 } else {
                     throw new Error('Forward operation failed');
                 }
@@ -2017,10 +1996,9 @@
             } catch (error) {
                 console.error('Error forwarding template:', error);
                 
-                // More detailed error message
                 let errorMessage = 'Error forwarding template to dashboard.\n\n';
-                if (error.message.includes('API')) {
-                    errorMessage += 'API connection issue. Please check your connection and try again.';
+                if (error.message.includes('not configured')) {
+                    errorMessage += 'Database connection issue. Please check your configuration.';
                 } else {
                     errorMessage += `Details: ${error.message}\n\nPlease try again or contact support if the issue persists.`;
                 }
@@ -2028,14 +2006,9 @@
                 alert(errorMessage);
                 
             } finally {
-                // FIXED: Restore button state properly
                 forwardBtn.textContent = originalText;
-                
-                // FIXED: Only re-enable if all required conditions are met
                 const canForward = builder.isValidForCreation() && builder.selections.platform;
                 forwardBtn.disabled = !canForward;
-                
-                console.log('Forward to dashboard operation completed');
             }
         }
 
