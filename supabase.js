@@ -215,21 +215,20 @@ const templateEngineAPI = {
     }
   },
 
-  // Forward template to dashboard - CREATES A COPY IN pending_content_library
+  // Forward template to dashboard - ACTUALLY SAVE TO DATABASE
   async forwardToDashboard(templateData) {
     if (!supabase) throw new Error('Supabase not configured');
     try {
       const { data: { user } } = await supabase.auth.getUser();
       const userId = user?.id || null;
 
-      // Create a COPY in pending_content_library using CURRENT form data
-      const pendingTemplateData = {
-        id: `pending_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      // ACTUALLY SAVE the current form data to pending_content_library
+      const saveData = {
         template_id: templateData.templateId,
         content_title: templateData.content.title || 'Untitled Template',
         content_id: `content_${Date.now()}`,
         
-        // Current template selections
+        // All current selections from form
         character_profile: templateData.selections.character?.value || null,
         theme: templateData.selections.theme?.value || null,
         audience: templateData.selections.audience?.value || null,
@@ -237,55 +236,56 @@ const templateEngineAPI = {
         template_type: templateData.selections.template_type?.value || null,
         platform: templateData.selections.platform?.value || null,
         
-        // Current content fields from form
+        // All current content from form  
         title: templateData.content.title || null,
         description: templateData.content.description || null,
         hashtags: templateData.content.hashtags || [],
         keywords: templateData.content.keywords || null,
         cta: templateData.content.cta || null,
         
-        // Template Library specific fields
+        // Required fields
         status: 'pending',
         is_from_template: true,
         source_template_id: templateData.templateId,
         is_active: true,
         voiceStyle: templateData.selections.voice?.value || null,
-        
-        // Platform selection for dashboard
         selected_platforms: templateData.selections.platform?.value ? [templateData.selections.platform.value] : [],
         media_files: [],
-        
-        // Timestamps and user info
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
         user_id: userId,
-        created_by: 'template_engine'
+        created_by: 'template_engine',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
 
-      // Insert COPY into pending_content_library table
-      const { data: insertedData, error: insertError } = await supabase
+      console.log('Saving to pending_content_library:', saveData);
+
+      // ACTUAL DATABASE INSERT
+      const { data: savedData, error: saveError } = await supabase
         .from('pending_content_library')
-        .insert(pendingTemplateData)
+        .insert(saveData)
         .select()
         .single();
 
-      if (insertError) {
-        console.error('Error creating template copy:', insertError);
-        throw new Error(`Failed to forward template: ${insertError.message}`);
+      if (saveError) {
+        console.error('Database save error:', saveError);
+        throw new Error(`Failed to save: ${saveError.message}`);
       }
+
+      console.log('Successfully saved to database:', savedData);
 
       return {
         success: true,
-        message: 'Template copy forwarded to dashboard successfully',
+        message: 'Template saved and forwarded to dashboard',
         data: {
-          pendingTemplateId: insertedData.id,
-          originalTemplateId: templateData.templateId,
-          forwardedAt: new Date().toISOString()
+          savedId: savedData.id || savedData.content_id,
+          templateId: templateData.templateId,
+          platform: templateData.selections.platform?.value,
+          savedAt: new Date().toISOString()
         }
       };
       
     } catch (error) {
-      console.error('Error forwarding to dashboard:', error);
+      console.error('Error saving template:', error);
       throw error;
     }
   }
