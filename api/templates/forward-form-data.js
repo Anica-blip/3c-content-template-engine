@@ -31,7 +31,7 @@ export default async function handler(req, res) {
     // Generate completely new content_id for this copy
     const newContentId = `content_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    // Map current form data to pending_content_library schema - ALWAYS NEW ENTRY
+    // FIXED: Use ONLY the fields that actually exist in pending_content_library schema
     const insertData = {
       // Generate new unique content_id for this copy
       content_id: newContentId,
@@ -40,7 +40,7 @@ export default async function handler(req, res) {
       template_id: formData.templateId,
       content_title: formData.content.title || 'Untitled Copy',
       
-      // Current selections from form (whatever user changed)
+      // RESTORED: voiceStyle field (was added later to schema)
       character_profile: formData.selections.character?.value || null,
       theme: formData.selections.theme?.value || null,
       audience: formData.selections.audience?.value || null,
@@ -49,20 +49,22 @@ export default async function handler(req, res) {
       platform: formData.selections.platform?.value || null,
       voiceStyle: formData.selections.voice?.value || null,
       
-      // Current content from form (whatever user modified)
+      // Current content from form - using simple field names from schema
       title: formData.content.title || '',
       description: formData.content.description || '',
       hashtags: formData.content.hashtags || [],
       keywords: formData.content.keywords || '',
       cta: formData.content.cta || '',
       
+      // Optional fields that exist in schema
+      selected_platforms: formData.selections.platform?.value ? [formData.selections.platform.value] : [],
+      media_files: [],
+      
       // Mark this as a copy from template
       status: 'pending',
       is_from_template: true,
       source_template_id: formData.templateId, // Reference to original
       is_active: true,
-      selected_platforms: formData.selections.platform?.value ? [formData.selections.platform.value] : [],
-      media_files: [],
       user_id: null,
       created_by: 'template_engine_copy',
       created_at: new Date().toISOString(),
@@ -73,7 +75,7 @@ export default async function handler(req, res) {
 
     // ALWAYS INSERT - never update existing
     const { data: savedData, error: saveError } = await supabase
-      .from('pending_content_library')  // CORRECT: Using pending_content_library table
+      .from('pending_content_library')
       .insert(insertData)
       .select()
       .single();
