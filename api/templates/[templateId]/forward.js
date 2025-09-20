@@ -26,12 +26,12 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Template ID is required' });
     }
 
-    // Get template first
+    // Get template first - FIXED: Use correct field name
     const { data: template, error: fetchError } = await supabase
       .from('content_templates')
       .select('*')
       .eq('template_id', templateId)
-      .eq('status', 'active')
+      .eq('is_active', true)
       .single();
 
     if (fetchError) {
@@ -44,7 +44,8 @@ export default async function handler(req, res) {
       throw fetchError;
     }
 
-    if (!template.selections?.platform) {
+    // FIXED: Check platform_value instead of nested selections
+    if (!template.platform_value) {
       return res.status(400).json({
         error: 'Template must have platform selected for forwarding'
       });
@@ -55,36 +56,50 @@ export default async function handler(req, res) {
       .from('content_templates')
       .update({ 
         status: 'forwarded',
-        forwarded_at: new Date().toISOString()
+        updated_at: new Date().toISOString()
       })
       .eq('template_id', templateId);
 
     if (updateError) throw updateError;
 
-    // Insert into pending_content_library for Template Library
+    // FIXED: Insert into pending_content_library with correct data structure
     const forwardData = {
+      id: `pending_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       template_id: template.template_id,
-      content_title: template.content?.title || template.content_title || 'Untitled Template',
-      character_profile: template.selections?.character?.value || null,
-      theme: template.selections?.theme?.value || null,
-      audience: template.selections?.audience?.value || null,
-      media_type: template.selections?.media?.value || null,
-      template_type: template.selections?.template_type?.value || null,
-      platform: template.selections?.platform?.value || null,
-      title: template.content?.title || template.content_title || '',
-      description: template.content?.description || template.content_description || '',
-      hashtags: template.content?.hashtags || template.content_hashtags || [],
-      keywords: template.content?.keywords || template.content_keywords || '',
-      cta: template.content?.cta || template.content_cta || '',
-      media_files: [],
-      selected_platforms: template.selections?.platform ? [template.selections.platform.value] : [],
+      content_title: template.content_title || 'Untitled Template',
+      content_id: `content_${Date.now()}`,
+      
+      // FIXED: Use actual database field names
+      character_profile: template.character_value,
+      theme: template.theme_value,
+      audience: template.audience_value,
+      media_type: template.media_value,
+      template_type: template.template_type_value,
+      platform: template.platform_value,
+      
+      // Content fields
+      title: template.content_title || '',
+      description: template.content_description || '',
+      hashtags: template.content_hashtags || [],
+      keywords: template.content_keywords || '',
+      cta: template.content_cta || '',
+      
       // Template Library specific fields
       status: 'pending',
       is_from_template: true,
+      source_template_id: template.template_id,
       is_active: true,
+      voiceStyle: template.voice_value,
+      
+      // Platform selection for form
+      selected_platforms: template.platform_value ? [template.platform_value] : [],
+      media_files: [],
+      
+      // Timestamps and user info
       created_at: new Date().toISOString(),
-      user_id: 'system', // Replace with actual user ID if available
-      created_by: 'content_template_engine'
+      updated_at: new Date().toISOString(),
+      user_id: template.user_id || 'system',
+      created_by: 'template_engine'
     };
 
     const { data: insertData, error: insertError } = await supabase
@@ -105,8 +120,9 @@ export default async function handler(req, res) {
       success: true,
       message: 'Template forwarded to Template Library successfully',
       data: {
-        templateId: templateId,
-        platform: template.selections.platform.value,
+        pendingTemplateId: insertData.id,
+        originalTemplateId: templateId,
+        platform: template.platform_value,
         forwardedAt: new Date().toISOString(),
         status: 'forwarded',
         libraryEntry: insertData
