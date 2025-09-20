@@ -26,7 +26,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Template ID is required' });
     }
 
-    // Get template first - FIXED: Use correct field name
+    // Get template first - FIXED: Check for is_active and correct status
     const { data: template, error: fetchError } = await supabase
       .from('content_templates')
       .select('*')
@@ -44,7 +44,7 @@ export default async function handler(req, res) {
       throw fetchError;
     }
 
-    // FIXED: Check platform_value instead of nested selections
+    // FIXED: Check platform from database structure
     if (!template.platform_value) {
       return res.status(400).json({
         error: 'Template must have platform selected for forwarding'
@@ -56,50 +56,36 @@ export default async function handler(req, res) {
       .from('content_templates')
       .update({ 
         status: 'forwarded',
-        updated_at: new Date().toISOString()
+        forwarded_at: new Date().toISOString()
       })
       .eq('template_id', templateId);
 
     if (updateError) throw updateError;
 
-    // FIXED: Insert into pending_content_library with correct data structure
+    // Insert into pending_content_library for Template Library - FIXED: Correct field mapping
     const forwardData = {
-      id: `pending_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       template_id: template.template_id,
       content_title: template.content_title || 'Untitled Template',
-      content_id: `content_${Date.now()}`,
-      
-      // FIXED: Use actual database field names
-      character_profile: template.character_value,
-      theme: template.theme_value,
-      audience: template.audience_value,
-      media_type: template.media_value,
-      template_type: template.template_type_value,
-      platform: template.platform_value,
-      
-      // Content fields
+      character_profile: template.character_value || null,
+      theme: template.theme_value || null,
+      audience: template.audience_value || null,
+      media_type: template.media_value || null,
+      template_type: template.template_type_value || null,
+      platform: template.platform_value || null,
       title: template.content_title || '',
       description: template.content_description || '',
       hashtags: template.content_hashtags || [],
       keywords: template.content_keywords || '',
       cta: template.content_cta || '',
-      
+      media_files: [],
+      selected_platforms: template.platform_value ? [template.platform_value] : [],
       // Template Library specific fields
       status: 'pending',
       is_from_template: true,
-      source_template_id: template.template_id,
       is_active: true,
-      voiceStyle: template.voice_value,
-      
-      // Platform selection for form
-      selected_platforms: template.platform_value ? [template.platform_value] : [],
-      media_files: [],
-      
-      // Timestamps and user info
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
       user_id: template.user_id || 'system',
-      created_by: 'template_engine'
+      created_by: 'content_template_engine'
     };
 
     const { data: insertData, error: insertError } = await supabase
@@ -120,8 +106,7 @@ export default async function handler(req, res) {
       success: true,
       message: 'Template forwarded to Template Library successfully',
       data: {
-        pendingTemplateId: insertData.id,
-        originalTemplateId: templateId,
+        templateId: templateId,
         platform: template.platform_value,
         forwardedAt: new Date().toISOString(),
         status: 'forwarded',
