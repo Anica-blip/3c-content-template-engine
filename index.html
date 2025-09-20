@@ -989,7 +989,7 @@
                         selections: {
                             theme: result.data.theme_code ? { value: result.data.theme_value, code: result.data.theme_code } : null,
                             character: result.data.character_value ? { value: result.data.character_value, code: null } : null,
-                            voice: result.data.voice_value ? { value: result.data.voice_value, code: null } : null,
+                            voice: result.data.voice_style ? { value: result.data.voice_style, code: null } : null,
                             audience: result.data.audience_code ? { value: result.data.audience_value, code: result.data.audience_code } : null,
                             media: result.data.media_code ? { value: result.data.media_value, code: result.data.media_code } : null,
                             template_type: result.data.template_type_code ? { value: result.data.template_type_value, code: result.data.template_type_code } : null,
@@ -1887,10 +1887,11 @@
                 document.getElementById('template-type-select').value = templateData.selections.template_type.value;
                 builder.handleSelection(document.getElementById('template-type-select'));
             }
-            if (templateData.selections.platform) {
-                document.getElementById('platform-select').value = templateData.selections.platform.value;
-                builder.handleSelection(document.getElementById('platform-select'));
-            }
+            
+            // Platform selection cleared for flexibility - user chooses platform for this copy
+            document.getElementById('platform-select').value = '';
+            builder.selections.platform = null;
+            document.getElementById('platform-select').classList.remove('completed');
             
             // FIXED: Set template ID directly without regeneration
             builder.templateId = templateData.templateId;
