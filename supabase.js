@@ -215,21 +215,20 @@ const templateEngineAPI = {
     }
   },
 
-  // Forward template to dashboard - CREATES A COPY WITH CURRENT CHANGES
+  // Forward template to dashboard - CREATES A COPY IN content_template_library
   async forwardToDashboard(templateData) {
     if (!supabase) throw new Error('Supabase not configured');
     try {
       const { data: { user } } = await supabase.auth.getUser();
       const userId = user?.id || null;
 
-      // Create a COPY using CURRENT form data (templateData), not database
-      const pendingTemplateData = {
-        id: `pending_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      // Create a COPY in content_template_library using CURRENT form data
+      const templateLibraryData = {
         template_id: templateData.templateId,
         content_title: templateData.content.title || 'Untitled Template',
         content_id: `content_${Date.now()}`,
         
-        // Transform CURRENT template data to Template Library format
+        // Current template selections
         character_profile: templateData.selections.character?.value || null,
         theme: templateData.selections.theme?.value || null,
         audience: templateData.selections.audience?.value || null,
@@ -237,7 +236,7 @@ const templateEngineAPI = {
         template_type: templateData.selections.template_type?.value || null,
         platform: templateData.selections.platform?.value || null,
         
-        // CURRENT Content fields from form
+        // Current content fields from form
         title: templateData.content.title || null,
         description: templateData.content.description || null,
         hashtags: templateData.content.hashtags || [],
@@ -251,7 +250,7 @@ const templateEngineAPI = {
         is_active: true,
         voiceStyle: templateData.selections.voice?.value || null,
         
-        // CURRENT Platform selection for form
+        // Platform selection for dashboard
         selected_platforms: templateData.selections.platform?.value ? [templateData.selections.platform.value] : [],
         media_files: [],
         
@@ -262,10 +261,10 @@ const templateEngineAPI = {
         created_by: 'template_engine'
       };
 
-      // Insert COPY into pending_content_library table (Template Library reads from here)
+      // Insert COPY into content_template_library table
       const { data: insertedData, error: insertError } = await supabase
-        .from('pending_content_library')
-        .insert(pendingTemplateData)
+        .from('content_template_library')
+        .insert(templateLibraryData)
         .select()
         .single();
 
@@ -274,13 +273,11 @@ const templateEngineAPI = {
         throw new Error(`Failed to forward template: ${insertError.message}`);
       }
 
-      // NOTE: Original template remains unchanged in content_templates table
-      
       return {
         success: true,
         message: 'Template copy forwarded to dashboard successfully',
         data: {
-          pendingTemplateId: insertedData.id,
+          libraryTemplateId: insertedData.template_id,
           originalTemplateId: templateData.templateId,
           forwardedAt: new Date().toISOString()
         }
