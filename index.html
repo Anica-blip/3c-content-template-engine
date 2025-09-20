@@ -1091,15 +1091,20 @@
         }
     </script>
 
-    <!-- Separate system ONLY for forwardToDashboard -->
+    <!-- Import Supabase client -->
     <script type="module">
         import { supabase } from './supabase.js';
+        // Make supabase globally available
+        window.supabaseClient = supabase;
+    </script>
 
-        // Separate forwardToDashboard function using direct Supabase
+    <!-- Separate system ONLY for forwardToDashboard -->
+    <script>
+        // Wait for supabase client to be available, then create the function
         window.forwardToDashboardDirect = async function(templateData) {
-            if (!supabase) throw new Error('Supabase not configured');
+            if (!window.supabaseClient) throw new Error('Supabase not configured');
             try {
-                const { data: { user } } = await supabase.auth.getUser();
+                const { data: { user } } = await window.supabaseClient.auth.getUser();
                 const userId = user?.id || null;
 
                 const saveData = {
@@ -1132,7 +1137,7 @@
 
                 console.log('Saving copy to pending_content_library:', saveData);
 
-                const { data: savedData, error: saveError } = await supabase
+                const { data: savedData, error: saveError } = await window.supabaseClient
                     .from('pending_content_library')
                     .insert(saveData)
                     .select()
