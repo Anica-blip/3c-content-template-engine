@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+const { createClient } = require('@supabase/supabase-js');
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -69,35 +69,6 @@ export default async function handler(req, res) {
       updated_at: new Date().toISOString(),
       is_active: true
     };
-if (error) {
-  console.error('Insert error details:', {
-    message: error.message,
-    details: error.details,
-    hint: error.hint,
-    code: error.code
-  });
-  return res.status(500).json({
-    error: 'Failed to forward template',
-    message: error.message,
-    details: error.details,
-    hint: error.hint,
-    code: error.code
-  });
-}
-
-console.log('Successfully inserted current form data into pending_content_library');
-
-res.status(200).json({
-  success: true,
-  message: 'Template forwarded to Template Library successfully',
-  data: {
-    templateId: currentTemplateData.templateId,
-    platform: currentTemplateData.selections.platform?.value,
-    forwardedAt: new Date().toISOString(),
-    libraryEntry: data,
-    pendingTemplateId: data.id
-  }
-});
 
     console.log('Insert data prepared with current form data:', Object.keys(insertData));
 
@@ -105,3 +76,45 @@ res.status(200).json({
     const { data, error } = await supabase
       .from('pending_content_library')
       .insert(insertData)
+      .select()
+      .single();
+      
+    if (error) {
+      console.error('Insert error details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
+      return res.status(500).json({
+        error: 'Failed to forward template',
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
+    }
+
+    console.log('Successfully inserted current form data into pending_content_library');
+
+    res.status(200).json({
+      success: true,
+      message: 'Template forwarded to Template Library successfully',
+      data: {
+        templateId: currentTemplateData.templateId,
+        platform: currentTemplateData.selections.platform?.value,
+        forwardedAt: new Date().toISOString(),
+        libraryEntry: data,
+        pendingTemplateId: data.id
+      }
+    });
+
+  } catch (error) {
+    console.error('Forward template error:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: error.message,
+      stack: error.stack
+    });
+  }
+}
