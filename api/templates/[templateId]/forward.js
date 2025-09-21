@@ -64,7 +64,7 @@ export default async function handler(req, res) {
       is_from_template: true,
       source_template_id: currentTemplateData.templateId,
       user_id: null, // Will be set by Supabase auth if available
-      created_by: 'template_engine',
+      created_by: null, // Set to null since we don't have user authentication
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       is_active: true
