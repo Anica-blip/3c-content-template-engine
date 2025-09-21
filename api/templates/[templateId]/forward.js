@@ -58,7 +58,7 @@ export default async function handler(req, res) {
       media_type: template.media_value || null,
       template_type: template.template_type_value || null,
       platform: template.platform_value || null,
-      voiceStyle: template.voice_style || null,  // ADDED: Missing voice field mapping
+      voice_style: template.voice_style || null,  // FIXED: Changed from voiceStyle to voice_style
       title: template.content_title || '',
       description: template.content_description || '',
       hashtags: template.content_hashtags || [],
