@@ -1062,11 +1062,13 @@
                 }
             },
 
-            // Forward to dashboard
+            // Forward to dashboard - FIXED to send current form data
             async forwardToDashboard(templateData) {
                 try {
                     const response = await fetch(`${API_BASE_URL}/templates/${templateData.templateId}/forward`, {
-                        method: 'POST'
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(templateData)  // FIXED: Send current template data
                     });
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
                     const result = await response.json();
