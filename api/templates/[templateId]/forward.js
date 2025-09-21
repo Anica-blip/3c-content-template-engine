@@ -26,101 +26,82 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Template ID is required' });
     }
 
-    // Get template from content_templates
-    const { data: template, error: fetchError } = await supabase
-      .from('content_templates')
-      .select('*')
-      .eq('template_id', templateId)
-      .eq('is_active', true)
-      .single();
-
-    if (fetchError) {
-      console.error('Fetch error:', fetchError);
-      if (fetchError.code === 'PGRST116') {
-        return res.status(404).json({
-          error: 'Template not found',
-          templateId: templateId
-        });
-      }
-      throw fetchError;
+    // FIXED: Use current form data from POST body instead of fetching original template
+    const currentTemplateData = req.body;
+    
+    if (!currentTemplateData) {
+      return res.status(400).json({ error: 'Template data is required in request body' });
     }
 
-    console.log('Template found:', template.template_id);
+    console.log('Forwarding current form data:', currentTemplateData.templateId);
 
-    // Map to pending_content_library schema - NO manual ID
+    // FIXED: Map current form data to pending_content_library schema directly
     const insertData = {
-      template_id: template.template_id,
-      content_title: template.content_title || 'Untitled Template',
+      template_id: currentTemplateData.templateId,
+      content_title: currentTemplateData.content.title || 'Untitled Template',
       content_id: `content_${Date.now()}`,
-      character_profile: template.character_value || null,
-      theme: template.theme_value || null,
-      audience: template.audience_value || null,
-      media_type: template.media_value || null,
-      template_type: template.template_type_value || null,
-      platform: template.platform_value || null,
-      voice_style: template.voice_style || null,  // FIXED: Changed from voiceStyle to voice_style
-      title: template.content_title || '',
-      description: template.content_description || '',
-      hashtags: template.content_hashtags || [],
-      keywords: template.content_keywords || '',
-      cta: template.content_cta || '',
+      
+      // Map current selections to pending_content_library format
+      character_profile: currentTemplateData.selections.character?.value || null,
+      theme: currentTemplateData.selections.theme?.value || null,
+      audience: currentTemplateData.selections.audience?.value || null,
+      media_type: currentTemplateData.selections.media?.value || null,
+      template_type: currentTemplateData.selections.template_type?.value || null,
+      platform: currentTemplateData.selections.platform?.value || null,
+      voice_style: currentTemplateData.selections.voice?.value || null,
+      
+      // Map current content to pending_content_library format
+      title: currentTemplateData.content.title || '',
+      description: currentTemplateData.content.description || '',
+      hashtags: currentTemplateData.content.hashtags || [],
+      keywords: currentTemplateData.content.keywords || '',
+      cta: currentTemplateData.content.cta || '',
+      
+      // Standard fields for pending_content_library
       media_files: [],
-      selected_platforms: template.platform_value ? [template.platform_value] : [],
+      selected_platforms: currentTemplateData.selections.platform?.value ? [currentTemplateData.selections.platform.value] : [],
       status: 'pending',
       is_from_template: true,
-      source_template_id: template.template_id,
-      user_id: template.user_id,
-      created_by: template.created_by,
+      source_template_id: currentTemplateData.templateId,
+      user_id: null, // Will be set by Supabase auth if available
+      created_by: 'template_engine',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       is_active: true
     };
+if (error) {
+  console.error('Insert error details:', {
+    message: error.message,
+    details: error.details,
+    hint: error.hint,
+    code: error.code
+  });
+  return res.status(500).json({
+    error: 'Failed to forward template',
+    message: error.message,
+    details: error.details,
+    hint: error.hint,
+    code: error.code
+  });
+}
 
-    console.log('Insert data prepared:', Object.keys(insertData));
+console.log('Successfully inserted current form data into pending_content_library');
 
-    // Insert into pending_content_library
+res.status(200).json({
+  success: true,
+  message: 'Template forwarded to Template Library successfully',
+  data: {
+    templateId: currentTemplateData.templateId,
+    platform: currentTemplateData.selections.platform?.value,
+    forwardedAt: new Date().toISOString(),
+    libraryEntry: data,
+    pendingTemplateId: data.id
+  }
+});
+
+    console.log('Insert data prepared with current form data:', Object.keys(insertData));
+
+    // Insert current form data into pending_content_library
     const { data, error } = await supabase
       .from('pending_content_library')
       .insert(insertData)
-      .select()
-      .single();
-      
-    if (error) {
-      console.error('Insert error details:', {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code
-      });
-      return res.status(500).json({
-        error: 'Failed to forward template',
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code
-      });
-    }
-
-    console.log('Successfully inserted into pending_content_library');
-
-    res.status(200).json({
-      success: true,
-      message: 'Template forwarded to Template Library successfully',
-      data: {
-        templateId: templateId,
-        platform: template.platform_value,
-        forwardedAt: new Date().toISOString(),
-        libraryEntry: data,
-        pendingTemplateId: data.id
-      }
-    });
-
-  } catch (error) {
-    console.error('Forward template error:', error);
-    res.status(500).json({
-      error: 'Internal server error',
-      message: error.message,
-      stack: error.stack
-    });
-  }
-}
