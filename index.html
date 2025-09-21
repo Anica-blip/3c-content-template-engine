@@ -1962,6 +1962,10 @@
                 alert('Please select a platform before forwarding to dashboard');
                 return;
             }
+            if (!window.templateEngineAPI) {
+                alert('API is not connected. Cannot forward template.');
+                return;
+            }
             
             const data = builder.exportSelections();
             const forwardBtn = document.getElementById('forward-btn');
@@ -1969,54 +1973,66 @@
             
             try {
                 // Update button state
-                forwardBtn.textContent = 'Creating Copy...';
+                forwardBtn.textContent = 'Forwarding...';
                 forwardBtn.disabled = true;
                 
-                console.log('Creating NEW copy in pending_content_library with current form data');
+                console.log('Forwarding template to dashboard:', data.templateId);
                 
-                // Call the specific API endpoint that creates NEW copies
-                const response = await fetch(`${API_BASE_URL}/templates/forward-form-data`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ formData: data })
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
+                // FIXED: Don't save when editing existing template, just forward with current platform
+                if (!builder.isEditingExistingTemplate) {
+                    // Only save if it's a new template
+                    await window.templateEngineAPI.saveTemplate(data);
+                    console.log('Template saved successfully');
                 }
                 
-                const forwardResult = await response.json();
-                console.log('NEW copy created:', forwardResult);
+                // Then forward to Template Library (pending_content_library table)
+                const forwardResult = await window.templateEngineAPI.forwardToDashboard(data);
+                console.log('Forward result:', forwardResult);
                 
                 if (forwardResult.success) {
                     alert(
-                        `NEW Copy Created in Template Library!\n\n` +
-                        `Source Template: ${data.templateId}\n` +
+                        `✅ Template Successfully Forwarded to Template Library!\n\n` +
+                        `Template ID: ${data.templateId}\n` +
                         `Platform: ${builder.selections.platform.value}\n` +
-                        `New Copy ID: ${forwardResult.data.pendingTemplateId}\n` +
-                        `Content ID: ${forwardResult.data.newContentId}\n\n` +
-                        `A completely new copy has been created in pending_content_library.`
+                        `Pending Template ID: ${forwardResult.data.pendingTemplateId}\n\n` +
+                        `The template is now available in the Content Manager > Template Library tab.`
                     );
+                    
+                    // FIXED: Don't reset when editing existing template - just update platform display
+                    if (!builder.isEditingExistingTemplate) {
+                        // Optional: Reset form after successful forward for new templates
+                        if (confirm('Would you like to reset the form to create a new template?')) {
+                            resetBuilder();
+                        }
+                    }
                 } else {
-                    throw new Error('Failed to create new copy');
+                    throw new Error('Forward operation failed');
                 }
                 
             } catch (error) {
-                console.error('Error creating new copy:', error);
+                console.error('Error forwarding template:', error);
                 
-                let errorMessage = 'Error creating new copy in Template Library.\n\n';
-                if (error.message.includes('405')) {
-                    errorMessage += 'API endpoint not found. Check that forward-form-data.js is in /api/templates/ folder.';
+                // More detailed error message
+                let errorMessage = 'Error forwarding template to dashboard.\n\n';
+                if (error.message.includes('not found')) {
+                    errorMessage += 'Template not found. Please save the template first and try again.';
+                } else if (error.message.includes('API')) {
+                    errorMessage += 'API connection issue. Please check your connection and try again.';
                 } else {
-                    errorMessage += `Details: ${error.message}`;
+                    errorMessage += `Details: ${error.message}\n\nPlease try again or contact support if the issue persists.`;
                 }
                 
                 alert(errorMessage);
                 
             } finally {
+                // FIXED: Restore button state properly
                 forwardBtn.textContent = originalText;
+                
+                // FIXED: Only re-enable if all required conditions are met
                 const canForward = builder.isValidForCreation() && builder.selections.platform;
                 forwardBtn.disabled = !canForward;
+                
+                console.log('Forward to dashboard operation completed');
             }
         }
 
