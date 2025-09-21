@@ -658,7 +658,7 @@
             <div class="header-content">
                 <div>
                     <h1 class="app-title">3C Content Template Engine</h1>
-                    <span class="app-subtitle">Create â€¢ Customize â€¢ Convert</span>
+                    <span class="app-subtitle">Create • Customize • Convert</span>
                 </div>
                 <div class="header-buttons">
                     <button class="btn btn-outline" onclick="resetBuilder()">Reset</button>
@@ -926,7 +926,7 @@
 
                         <!-- Creation Actions -->
                         <div class="action-buttons">
-                            <button class="btn btn-outline" onclick="backToSelection()">â† Back to Selection</button>
+                            <button class="btn btn-outline" onclick="backToSelection()">← Back to Selection</button>
                             <button class="btn btn-outline" onclick="previewTemplate()">Preview Template</button>
                             <button class="btn btn-secondary" onclick="saveTemplate()">Save Template</button>
                             <button class="btn btn-success" onclick="forwardToDashboard()" id="forward-btn" disabled>Forward to Dashboard</button>
@@ -989,7 +989,7 @@
                         selections: {
                             theme: result.data.theme_code ? { value: result.data.theme_value, code: result.data.theme_code } : null,
                             character: result.data.character_value ? { value: result.data.character_value, code: null } : null,
-                            voice: result.data.voice_value ? { value: result.data.voice_value, code: null } : null,
+                            voice: result.data.voice_style ? { value: result.data.voice_style, code: null } : null,
                             audience: result.data.audience_code ? { value: result.data.audience_value, code: result.data.audience_code } : null,
                             media: result.data.media_code ? { value: result.data.media_value, code: result.data.media_code } : null,
                             template_type: result.data.template_type_code ? { value: result.data.template_type_value, code: result.data.template_type_code } : null,
@@ -1334,7 +1334,7 @@
                                     cursor: pointer;
                                     padding: 4px;
                                     line-height: 1;
-                                ">Ã—</button>
+                                ">×</button>
                             </div>
                             <div class="modal-body">
                                 <div style="margin-bottom: 16px;">
@@ -1349,7 +1349,7 @@
                                 
                                 <div class="modal-actions">
                                     <button class="modal-btn modal-btn-secondary" id="create-new-version-btn">
-                                        <span class="btn-icon">ðŸ“</span>
+                                        <span class="btn-icon">📝</span>
                                         <div class="btn-text">
                                             <div>Create New Version</div>
                                             <div class="btn-description">Start fresh with next available number</div>
@@ -1991,7 +1991,7 @@
                 
                 if (forwardResult.success) {
                     alert(
-                        `âœ… Template Successfully Forwarded to Template Library!\n\n` +
+                        `✅ Template Successfully Forwarded to Template Library!\n\n` +
                         `Template ID: ${data.templateId}\n` +
                         `Platform: ${builder.selections.platform.value}\n` +
                         `Pending Template ID: ${forwardResult.data.pendingTemplateId}\n\n` +
