@@ -130,7 +130,7 @@ const templateEngineAPI = {
         theme_value: templateData.selections.theme?.value || null,
         theme_code: templateData.selections.theme?.code || null,
         character_value: templateData.selections.character?.value || null,
-        voice_style: templateData.selections.voice?.value || null,
+        voice_style: templateData.selections.voice?.value || null,  // FIXED: Changed from voiceStyle to voice_style
         audience_value: templateData.selections.audience?.value || null,
         audience_code: templateData.selections.audience?.code || null,
         media_value: templateData.selections.media?.value || null,
@@ -258,7 +258,7 @@ const templateEngineAPI = {
         is_from_template: true,
         source_template_id: fullTemplate.template_id,
         is_active: true,
-        voiceStyle: fullTemplate.voice_style,
+        voice_style: fullTemplate.voice_style,  // FIXED: Changed from voiceStyle to voice_style
         
         // Platform selection for form
         selected_platforms: fullTemplate.platform_value ? [fullTemplate.platform_value] : [],
