@@ -31,16 +31,13 @@ export default async function handler(req, res) {
     // Generate completely new content_id for this copy
     const newContentId = `content_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    // FIXED: Use ONLY the fields that actually exist in pending_content_library schema
+    // SIMPLE: Just save the template_id as is, no validation or checking
     const insertData = {
-      // Generate new unique content_id for this copy
       content_id: newContentId,
-      
-      // Use original template_id as reference but this is a NEW copy
-      template_id: formData.templateId,
+      template_id: formData.templateId,  // Use template_id exactly as passed
       content_title: formData.content.title || 'Untitled Copy',
       
-      // RESTORED: voiceStyle field (was added later to schema)
+      // Match pending_content_library schema exactly
       character_profile: formData.selections.character?.value || null,
       theme: formData.selections.theme?.value || null,
       audience: formData.selections.audience?.value || null,
@@ -49,31 +46,29 @@ export default async function handler(req, res) {
       platform: formData.selections.platform?.value || null,
       voice_style: formData.selections.voice?.value || null,
       
-      // Current content from form - using simple field names from schema
+      // Content fields
       title: formData.content.title || '',
       description: formData.content.description || '',
       hashtags: formData.content.hashtags || [],
       keywords: formData.content.keywords || '',
       cta: formData.content.cta || '',
       
-      // Optional fields that exist in schema
-      selected_platforms: formData.selections.platform?.value ? [formData.selections.platform.value] : [],
-      media_files: [],
-      
-      // Mark this as a copy from template
+      // Basic metadata
       status: 'pending',
       is_from_template: true,
-      source_template_id: formData.templateId, // Reference to original
+      source_template_id: formData.templateId,
       is_active: true,
+      selected_platforms: formData.selections.platform?.value ? [formData.selections.platform.value] : [],
+      media_files: [],
       user_id: null,
       created_by: 'template_engine_copy',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
 
-    console.log('Inserting NEW copy to pending_content_library with content_id:', newContentId);
+    console.log('Inserting to pending_content_library with content_id:', newContentId);
 
-    // ALWAYS INSERT - never update existing
+    // DIRECT INSERT - no validation, no checking
     const { data: savedData, error: saveError } = await supabase
       .from('pending_content_library')
       .insert(insertData)
@@ -81,23 +76,15 @@ export default async function handler(req, res) {
       .single();
 
     if (saveError) {
-      console.error('Failed to create new copy - Full error details:', {
-        message: saveError.message,
-        details: saveError.details,
-        hint: saveError.hint,
-        code: saveError.code
-      });
+      console.error('Insert failed:', saveError);
       return res.status(500).json({
-        error: 'Failed to create new copy in pending library',
+        error: 'Failed to create copy',
         message: saveError.message,
-        details: saveError.details,
-        hint: saveError.hint,
-        code: saveError.code,
-        insertData: Object.keys(insertData) // Show what fields we tried to insert
+        details: saveError.details
       });
     }
 
-    console.log('NEW copy created successfully with ID:', savedData.id);
+    console.log('Copy created successfully:', savedData.id);
 
     res.status(201).json({
       success: true,
@@ -112,7 +99,7 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error('Forward form data error:', error);
+    console.error('Forward error:', error);
     res.status(500).json({
       error: 'Internal server error',
       message: error.message
