@@ -1230,18 +1230,19 @@ input#new-audience {
   box-shadow: 0 0 22px rgba(34, 197, 94, 0.12) !important;
 }
 
-/* Page 2 — Content field containers: purple glow on focus */
+/* Page 2 — Content field containers: green glow matching hashtags */
 .content-field {
   padding: 14px 16px !important;
   background: var(--surface-2) !important;
-  border: 1.5px solid var(--border) !important;
+  border: 1.5px solid rgba(34, 197, 94, 0.35) !important;
   border-radius: 10px !important;
+  box-shadow: 0 0 16px rgba(34, 197, 94, 0.08) !important;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .content-field:focus-within {
-  border-color: rgba(124, 58, 237, 0.55) !important;
-  box-shadow: 0 0 22px rgba(124, 58, 237, 0.14) !important;
+  border-color: rgba(34, 197, 94, 0.65) !important;
+  box-shadow: 0 0 24px rgba(34, 197, 94, 0.18) !important;
 }
 
 /* Platform info container */
