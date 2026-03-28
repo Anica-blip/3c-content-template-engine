@@ -6,7 +6,7 @@
  * ============================================================
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Syne:wght@600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&family=Outfit:wght@300;400;500;600;700&family=Syne:wght@600;700;800&display=swap');
 
 /* ============================================================
    DARK PURPLE VARIABLE OVERRIDES
@@ -99,7 +99,7 @@ body {
 }
 
 .app-title {
-  font-family: 'Syne', sans-serif !important;
+  font-family: 'Open Sans', sans-serif !important;
   font-size: 1.6rem !important;
   font-weight: 800 !important;
   color: var(--accent-light) !important;
@@ -114,11 +114,9 @@ body {
   text-transform: uppercase;
 }
 
+/* Header credit hidden — watermark lives in the footer instead */
 .header-credit {
-  font-size: 0.7em;
-  color: var(--text-muted);
-  letter-spacing: 0.3px;
-  margin-top: 2px;
+  display: none;
 }
 
 /* Header buttons */
@@ -320,9 +318,9 @@ option {
 }
 
 .template-id-value {
-  color: var(--accent-light) !important;
+  color: var(--success) !important;
   font-family: 'SF Mono', 'Cascadia Code', 'Courier New', monospace !important;
-  text-shadow: 0 0 20px rgba(168, 85, 247, 0.6);
+  text-shadow: 0 0 20px rgba(34, 197, 94, 0.55);
 }
 
 .template-id-breakdown {
@@ -447,8 +445,9 @@ input::placeholder {
    ============================================================ */
 .hashtag-section {
   background: var(--surface-2) !important;
-  border: 1px solid var(--border) !important;
+  border: 1.5px solid rgba(34, 197, 94, 0.35) !important;
   border-radius: 10px !important;
+  box-shadow: 0 0 18px rgba(34, 197, 94, 0.1) !important;
 }
 
 .hashtag-section h4,
@@ -495,12 +494,12 @@ input.hashtag-input {
 }
 
 .hashtag-tag {
-  background: rgba(124, 58, 237, 0.15) !important;
-  color: var(--accent-light) !important;
-  border: 1px solid rgba(124, 58, 237, 0.35) !important;
+  background: rgba(34, 197, 94, 0.1) !important;
+  color: var(--success) !important;
+  border: 1px solid rgba(34, 197, 94, 0.35) !important;
   border-radius: 6px !important;
   font-size: 12px !important;
-  font-weight: 600 !important;
+  font-weight: 700 !important;
   padding: 4px 10px !important;
   display: inline-flex;
   align-items: center;
@@ -509,7 +508,7 @@ input.hashtag-input {
 }
 
 .hashtag-tag:hover {
-  background: rgba(124, 58, 237, 0.28) !important;
+  background: rgba(34, 197, 94, 0.2) !important;
 }
 
 .remove-hashtag {
@@ -1204,6 +1203,60 @@ input#new-audience {
 
 .app-footer-watermark a:hover {
   color: var(--accent-light);
+}
+
+/* ============================================================
+   SECTION GLOW BORDERS — visual guidance in dark mode
+   Helps users identify interactive areas at a glance
+   ============================================================ */
+
+/* Page 1 — Selection sections: purple glow */
+.choice-section {
+  background: var(--surface-2) !important;
+  border: 1.5px solid rgba(124, 58, 237, 0.45) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 0 18px rgba(124, 58, 237, 0.1) !important;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.choice-section:focus-within {
+  border-color: var(--accent-light) !important;
+  box-shadow: 0 0 26px rgba(124, 58, 237, 0.22) !important;
+}
+
+/* Template ID container — green glow */
+.template-id-display {
+  border: 1.5px solid rgba(34, 197, 94, 0.4) !important;
+  box-shadow: 0 0 22px rgba(34, 197, 94, 0.12) !important;
+}
+
+/* Page 2 — Content field containers: purple glow on focus */
+.content-field {
+  padding: 14px 16px !important;
+  background: var(--surface-2) !important;
+  border: 1.5px solid var(--border) !important;
+  border-radius: 10px !important;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.content-field:focus-within {
+  border-color: rgba(124, 58, 237, 0.55) !important;
+  box-shadow: 0 0 22px rgba(124, 58, 237, 0.14) !important;
+}
+
+/* Platform info container */
+.platform-info {
+  border: 1.5px solid rgba(124, 58, 237, 0.3) !important;
+  box-shadow: 0 0 14px rgba(124, 58, 237, 0.08) !important;
+}
+
+/* Template actions row */
+.template-actions {
+  background: var(--surface-2) !important;
+  border: 1.5px solid var(--border) !important;
+  border-radius: 10px !important;
+  padding: 14px 16px !important;
+  margin-top: 16px;
 }
 
 /* ============================================================
