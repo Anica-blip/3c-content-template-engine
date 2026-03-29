@@ -1,28 +1,24 @@
 /**
- * 3C Content Template Engine — Sign out functionality
+ * 3C Content Template Engine — Sign out
  * Built by Claude (Anthropic) × Chef Anica · 3C Thread To Success
  */
 
 async function signOut() {
   try {
-    // Prefer shared logout helper from auth.js
+    // Prefer the shared logout helper from auth.js (already loaded)
     if (window.authHelpers?.logout) {
-      await window.authHelpers.logout();
+      window.authHelpers.logout();
       return;
     }
 
-    // Fallback: direct sign-out if helper is unavailable
-    const client = window.supabase.createClient(
-      window.APP_CONFIG.SUPABASE_URL,
-      window.APP_CONFIG.SUPABASE_KEY
-    );
-    const { error } = await client.auth.signOut();
-    if (error) throw error;
+    // Fallback: clear localStorage directly
+    localStorage.removeItem('github-user');
+    localStorage.removeItem('session-expiry');
+    window.location.href = './login.html';
 
-    window.location.href = "./login.html";
   } catch (error) {
-    console.error("Sign out failed:", error);
-    // Always send user back to login page
-    window.location.href = "./login.html";
+    console.error('Sign out failed:', error);
+    // Always redirect to login regardless
+    window.location.href = './login.html';
   }
 }
