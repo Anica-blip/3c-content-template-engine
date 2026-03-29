@@ -2,7 +2,7 @@
 
 **The King of the 3C Ecosystem — Dark Purple Edition**
 
-> _"Simple but the most powerful 3C Ecosystem tool. This is where the whole dashboard logic was born."_  
+> _"Simple but the most powerful 3C Ecosystem tool. This is where the whole 3c Control Center dashboard logic was born."_  
 > — Chef Anica
 
 ---
