@@ -31,7 +31,7 @@
     return;
   }
 
-  if (!window.APP_CONFIG?.SUPABASE_URL || !window.APP_CONFIG?.SUPABASE_ANON_KEY) {
+  if (!window.APP_CONFIG?.SUPABASE_URL || !window.APP_CONFIG?.SUPABASE_KEY) {
     showError("Missing Supabase config.");
     return;
   }
