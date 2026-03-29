@@ -14,7 +14,7 @@ async function signOut() {
     // Fallback: direct sign-out if helper is unavailable
     const client = window.supabase.createClient(
       window.APP_CONFIG.SUPABASE_URL,
-      window.APP_CONFIG.SUPABASE_ANON_KEY
+      window.APP_CONFIG.SUPABASE_KEY
     );
     const { error } = await client.auth.signOut();
     if (error) throw error;
