@@ -1,24 +1,20 @@
 /**
  * 3C Content Template Engine — Sign out
+ * Ends the Supabase sign-in (this browser only) and returns to the login page.
  * Built by Claude (Anthropic) × Chef Anica · 3C Thread To Success
  */
 
 async function signOut() {
   try {
-    // Prefer the shared logout helper from auth.js (already loaded)
+    // The shared logout from auth.js ends the Supabase session and goes to login.html
     if (window.authHelpers?.logout) {
-      window.authHelpers.logout();
+      await window.authHelpers.logout();
       return;
     }
-
-    // Fallback: clear localStorage directly
-    localStorage.removeItem('github-user');
-    localStorage.removeItem('session-expiry');
-    window.location.href = './login.html';
-
   } catch (error) {
-    console.error('Sign out failed:', error);
-    // Always redirect to login regardless
-    window.location.href = './login.html';
+    console.error('Sign out failed');
   }
+
+  // Always end up on the login page, whatever happened above
+  window.location.href = './login.html';
 }
