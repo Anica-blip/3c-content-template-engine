@@ -1,7 +1,0 @@
-{
-  "name": "3c-content-template-engine",
-  "version": "1.0.0",
-  "dependencies": {
-    "@supabase/supabase-js": "^2.38.0"
-  }
-}
