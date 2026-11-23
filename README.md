@@ -1,204 +1,97 @@
-# 3C Content Template Engine
+# 🧩 3C Content Template Engine
 
 > ⚖️ This repository is protected under a binding [Legal Disclaimer](./LEGAL_DISCLAIMER.md) that governs all use, cloning, and forking from the date of inception. Please read before use.
 
-This project is part of the 3C Thread To Success™ ecosystem — a growing digital platform that combines creativity, structure, and real-world application.
+> A private template builder for the 3C Control Center. Live at https://3c-content-template-engine.vercel.app (owner sign-in only).
 
-The 3C Thread To Success™ brand, including its name, structure, characters (Aurion 3C Mascot), and overall system design, remains the intellectual property of the creator and is not included in this license.
+---
 
+**⚠️ Intellectual Property Notice**
+This repository is open source under the MIT License — the code skeleton is free to clone and adapt.
+The 3C Thread To Success™ brand, including its name, structure, characters (Caelum, Aurion, Jan, Casey, Anica), persona system (Falcon, Panther, Wolf, Lion), philosophy, and overall ecosystem identity remains the intellectual property of the creator and is **not** included in this license.
 Commercial use of the brand or replication of the ecosystem identity is not permitted without permission.
 
-### 🎭 The 3C Ecosystem
+---
 
-This project is part of a larger system built around three core identities:
+## 🎭 The 3C Ecosystem
 
-Aurion → Engagement & Experience
-Caelum → Structure & Direction
-Anica (Founder) → Authority & Vision
+This project is part of a larger system built around five core identities:
+
+**Aurion** → Engagement & Experience — 3C Mascot, community voice, diamond-energy guide
+**Caelum** → Structure & Direction — Chief Advisor, PR Manager, Brand Integrity Officer
+**Jan** → Clarity & Support — Writing & Editorial Support, Lifeline Mentor & Anchor
+**Casey** → Story & Play — Creative Director, Lifeline Playmaker & Ace Maven
+**Anica (Founder)** → Authority & Vision — Systems Strategist, Project Architect, the Chef
 
 Together, they create a balanced environment for growth, learning, and progression.
 
 ---
 
-**The King of the 3C Ecosystem — Dark Purple Edition**
+## 🧩 What Is the 3C Content Template Engine?
 
-> _"Simple but the most powerful 3C Ecosystem tool. This is where the whole dashboard logic was born."_  
-> — Chef Anica
+The template builder used alongside the 3C Control Center dashboard. Instead of writing every post from scratch, a template holds the structure, brand voice, platform and details. You fill in what changes and everything else stays consistent. Only the owner can sign in and use it.
 
----
+What is inside:
 
-## Credits
-
-**Originally conceived and built by Claude (Anthropic).**  
-Refined to professional Dark Purple standards by **Claude Sonnet 4.6 (Anthropic)** in collaboration with **Chef Anica / 3C Thread To Success Cooking Lab** 🧪👨‍🍳
-
-> _Designed & built with ❤️ by Claude (Anthropic) × Chef Anica · 3C Thread To Success™ Cooking Lab_
-
----
-
-## What Is This?
-
-A powerful, standalone content template builder for the 3C ecosystem — used as the **external layer of the 3C Control Center dashboard** for scheduled content management.
-
-Instead of writing each post from scratch, templates define the structure, brand voice, platform specs, and metadata. You fill in what changes, everything else stays consistent. This is the tool that **taught the dashboard how to think**.
-
-Templates created here are saved to **Supabase** and forwarded directly to the **3C Control Center Template Library** — this is a live, connected production tool, not a demo.
+- **Template builder** — three steps: Select, Create, Review.
+- **Smart template ID** — built from theme, audience, media, template type, character and voice, with an automatic number.
+- **Brand voices** — Anica, Caelum and Aurion character voices, plus voice style.
+- **Hashtag manager** — add, limit-check and suggest hashtags per platform, with live character counts.
+- **Save, load, search, delete** — templates are saved to the database; delete archives a template.
+- **Forward to the Template Library** — sends a template to the dashboard's `pending_content_library`.
+- **Platform generator** (`generator.html`) — platform details and limits; it does not use the database.
 
 ---
 
-## 🚀 Features
+## ⚙️ How It Is Built
 
-- **Dark Purple UI** — cohesive dark theme matching the full 3C ecosystem
-- **GitHub Login** — secured via GitHub OAuth, admin access only (no Supabase auth required)
-- **9 Platform Support** — Instagram, Facebook, LinkedIn, Twitter/X, YouTube, TikTok, Telegram, Pinterest, WhatsApp Business
-- **Template Builder Workflow** — Step 1: Select → Step 2: Create → Step 3: Review
-- **Brand Voice System** — Anica / Aurion / Caelum character voices
-- **Smart Template ID** — auto-generated IDs based on platform + voice + media + audience
-- **Hashtag Manager** — add, limit-check, and suggest hashtags per platform
-- **Custom Labels & Audiences** — personalise your content categories
-- **Save / Load / Export** — persisted to Supabase `content_templates` table + JSON export
-- **Forward to Dashboard** — sends templates to the `pending_content_library` table for processing by the 3C Control Center
-- **Character Count** — live per-platform limits with warning states
-- **Serverless API** — Vercel Functions handle all database operations via Supabase service role
+| Part | What it uses |
+|------|--------------|
+| Front end | Plain HTML, CSS and JavaScript (no build step) |
+| Database | Supabase project **3C Control Center** — tables `content_templates` and `pending_content_library` |
+| Files (R2) | None |
+| Workers | None |
+| Hosting | Vercel (static files) |
+| Admin access | GitHub sign-in through Supabase, owner only |
+
+Details of every connection are in [SETUP.md](SETUP.md).
 
 ---
 
-## 🏗️ Infrastructure
+## 🔐 Security and Privacy
 
-| Layer | Technology |
-|-------|-----------|
-| **Hosting** | [Vercel](https://vercel.com) — `https://3c-content-template-engine.vercel.app` |
-| **Authentication** | GitHub OAuth App → Vercel API routes (no Supabase auth) |
-| **Database** | [Supabase](https://supabase.com) — template storage and dashboard integration |
-| **Serverless API** | Vercel Functions (`/api/` folder) |
-
-### Supabase Tables
-
-| Table | Purpose |
-|-------|---------|
-| `content_templates` | Stores all saved templates with full metadata — theme, character, audience, media type, platform, title, description, hashtags, keywords, CTA |
-| `pending_content_library` | Receives templates forwarded to the 3C Control Center for scheduling and publishing |
-
-### Authentication Flow
-
-```
-User visits app → no session → redirected to login.html
-       ↓
-Clicks "GitHub Access Connection"
-       ↓
-/api/auth/login → GitHub OAuth authorization
-       ↓
-GitHub → /api/auth/callback (Vercel serverless)
-       ↓
-Validates GitHub username → session stored in localStorage
-       ↓
-Redirected to app ✅
-```
-
-Session is client-side (localStorage), expires after 1 hour. Sign out clears session and returns to login.
-
-### Vercel Environment Variables
-
-```
-GITHUB_CLIENT_ID       = from your GitHub OAuth App
-GITHUB_CLIENT_SECRET   = from your GitHub OAuth App
-SUPABASE_URL           = your Supabase project URL
-SUPABASE_KEY           = Supabase service role key (never in repo)
-```
+- Only the owner can read or write the two tables. The database itself enforces this; the page cannot bypass it.
+- Sign-in is GitHub through Supabase. After sign-in the page asks the database whether the account is the owner. Any other account is signed out with a notice.
+- The page holds only the public Supabase address and the public key. No secret keys are in this repository or in the hosting settings.
+- There are no server routes. The page talks to the database directly, using the owner's own sign-in.
 
 ---
 
-## 📁 Project Structure
+## 📖 Documentation
 
-```
-3c-content-template-engine/
-├── index.html               — Main app (session-guarded)
-├── login.html               — GitHub OAuth login page
-├── style.css                — Dark Purple theme
-├── config.js                — Supabase anon key (safe to be public)
-├── auth.js                  — Client-side session guard
-├── signout.js               — Sign out handler
-├── script.js                — Platform engine + Supabase template logic
-├── api/
-│   ├── auth/
-│   │   ├── login.js         — Redirects to GitHub OAuth
-│   │   └── callback.js      — Handles OAuth callback, validates user
-│   ├── health.js            — Health check endpoint
-│   ├── templates.js         — Template CRUD via Supabase service role
-│   └── test-connection.js   — Supabase connectivity test
-├── favicon.png
-├── 3C Thread To Success logo.png
-└── README.md
-```
+- [SETUP.md](SETUP.md) — every external connection, login, deploy steps, tests and change log
+- [LEGAL_DISCLAIMER.md](LEGAL_DISCLAIMER.md)
 
 ---
 
-## 💡 Usage Guide
+## 🎨 Credits
 
-### Creating a Template
-1. **Step 1 — Select:** Choose theme, character voice, target audience, media type, and template type
-2. **Step 2 — Create:** Fill in title, description, hashtags, keywords, CTA — character limits enforced live per platform
-3. **Step 3 — Review:** Preview, save to Supabase, or forward directly to the 3C Control Center dashboard
+*Designed and Built with ❤️ by Claude (Anthropic) × Chef Anica · 3C Thread To Success™ Cooking Lab* 🧪👨‍🍳
 
-### Brand Voices
-| Character | Voice Style |
-|-----------|-------------|
-| **Anica** | Empathetic, encouraging, professionally warm |
-| **Aurion** | Strategic, insightful, thought-provoking |
-| **Caelum** | Creative, inspiring, authentically engaging |
-
-### Platform Hashtag Limits
-| Platform | Max | Recommended |
-|----------|-----|-------------|
-| Instagram | 30 | 11 |
-| TikTok | 20 | 5 |
-| LinkedIn | 5 | 3 |
-| Twitter/X | 2 | 1 |
-| YouTube | 15 | 5 |
-
----
-
-## 🚧 Future Roadmap
-
-- [ ] Jan AI integration — AI-assisted content generation per template
-- [ ] Real-time collaboration
-- [ ] Analytics + performance tracking per template
-- [ ] Multi-platform preview rendering
-
----
-
-## 📞 See Also — The 3C Ecosystem
-
-All built by **Claude (Anthropic) × Chef Anica · 3C Thread To Success**
-
-| Project | Description |
-|---------|-------------|
-| [3C Control Center](https://github.com/Anica-blip) | React/TypeScript dashboard — the hub of the ecosystem |
-| [3c-quiz](https://github.com/Anica-blip/3c-quiz) | Interactive quiz platform |
-| [3c-quiz-admin](https://github.com/Anica-blip/3c-quiz-admin) | Visual quiz editor with dark purple UI |
-| [3c-card-games](https://github.com/Anica-blip/3c-card-games) | Card game platform with admin panel |
-| [3C Public Library](https://3c-public-library.org) | Public content library + Aurion Vault |
-| [interactive-PDF](https://github.com/Anica-blip/interactive-PDF) | Flipbook builder, presentation viewer and mobile PDF viewer |
-
----
-
-## License
-
-MIT — fork it, remix it, build on it. Just keep the credits. 🧪👨‍🍳
+*"Think Smarter, Not Harder — Zero Shortcuts"*
 
 ---
 
 ## 👤 Creator
 
-Anica-blip (“Chef”)
+**Anica-blip ("Chef")**
 Founder of 3C Thread To Success™ ("Cooking Lab")
 Independent Creator | Community Builder
 
 ---
 
-🧠 Philosophy
+## 🧠 Philosophy
 
-“Think it. Do it. Own it.”
+*"Think it. Do it. Own it."*
 
-This project was built from vision, persistence, and a commitment to creating meaningful and structured experiences — even with minimal resources.
-
+This project was built from vision, persistence, and a commitment to creating meaningful and structured experiences — even with minimal resources. It exists so that every post starts from a proven structure instead of a blank page.
